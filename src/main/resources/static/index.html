@@ -67,10 +67,9 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 
 /* gulmarkerat: något att plocka upp, en fiende som väntar, något att hitta */
 .hl,.hl .tx{color:#ffd65a!important}
-.opt.hl{background:rgba(255,214,90,.08);border-radius:5px;margin:0 -6px;padding:0 6px;animation:hlpulse 1.8s ease-in-out infinite}
+.opt.hl{background:rgba(255,214,90,.08);animation:hlpulse 1.8s ease-in-out infinite}
 .ev.hl{background:rgba(255,214,90,.07);border-left:3px solid #ffd65a;padding-left:6px;margin-left:-9px;border-radius:0 5px 5px 0}
 .pending.hl{color:#ffd65a}
-#chips button.hl{border-color:#b8952e;color:#ffe08a;background:rgba(255,214,90,.07)}
 @keyframes hlpulse{50%{background:rgba(255,214,90,.16)}}
 
 #screen{flex:1;min-height:0;padding:14px 16px 18px;overflow:auto;
@@ -95,8 +94,18 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
   display:grid;grid-template-rows:1fr;transition:grid-template-rows .25s ease,opacity .25s,margin .25s,padding .25s,border-color .25s}
 .menu>div{overflow:hidden}
 .menu.done{grid-template-rows:0fr;opacity:0;margin:0;padding:0 10px;border-color:transparent}
-.opt{display:flex;gap:.6em;align-items:baseline;white-space:pre-wrap}
+/* menyvalen i terminalen är knappar: klicka i stället för att skriva */
+button.opt{display:flex;gap:.6em;align-items:baseline;width:100%;text-align:left;white-space:pre-wrap;background:none;border:0;color:inherit;
+  font:inherit;padding:1px 6px;margin:0 -6px;border-radius:5px;cursor:pointer;transition:background .15s}
+.menu:not(.done) button.opt:hover{background:rgba(233,178,94,.10)}
+.menu:not(.done) button.opt:active{background:rgba(233,178,94,.18)}
+button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
 .opt .key{color:var(--accent);font-weight:700;min-width:1.2em}
+.opt.enter{color:var(--dim)}
+.jn{margin-left:10px;padding:2px 10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit;font-size:.9em;border-radius:6px;cursor:pointer;display:inline-flex;gap:5px;align-items:center;vertical-align:middle}
+.jn:hover{border-color:var(--accent)}
+.jn.yes{border-color:#b8952e;color:#ffe08a;background:rgba(255,214,90,.08)}
+.jn .ic{width:auto}
 .ask{color:var(--dim);font-size:.9em;margin-bottom:2px}
 .answer{color:var(--you);display:flex;gap:.55em;align-items:baseline;white-space:pre-wrap;margin:2px 0 4px}
 .answer .p{color:var(--dim)}
@@ -187,14 +196,6 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 #cover .feat{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:12.5px;color:var(--dim)}
 #cover .feat span{border:1px solid var(--line);border-radius:999px;padding:3px 10px}
 
-#chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px 0;background:var(--bg)}
-#chips:empty{display:none}
-#chips button{background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:6px 11px;font-family:var(--mono);font-size:13px;
-  display:flex;align-items:center;gap:6px;animation:draw .2s ease-out backwards;transition:border-color .15s,transform .1s}
-#chips button:hover{border-color:var(--accent);transform:translateY(-1px)}
-#chips button:active{transform:translateY(1px)}
-#chips b{color:var(--accent);font-weight:700}
-#chips .ic{width:auto}
 
 form{display:flex;gap:8px;padding:10px 16px 12px;background:var(--bg);border-top:1px solid var(--line)}
 form label{font-family:var(--mono);color:var(--accent);align-self:center}
@@ -204,7 +205,7 @@ form label{font-family:var(--mono);color:var(--accent);align-self:center}
 form .primary{padding:9px 16px;font-size:14px}
 footer{padding:6px 16px 10px;font-size:12px;color:var(--dim);display:flex;gap:12px;flex-wrap:wrap}
 footer a{color:var(--dim)}
-@media (max-width:560px){#chips{gap:5px;padding:6px 12px 0}#chips button{padding:4px 8px;font-size:12px}#hud{padding:6px 12px;gap:8px}#map{flex-basis:100%}#map .node{padding:4px 6px}#map .node:not([data-s="@"]) .nm{display:none}#hud .hero{margin-left:0}#screen{padding:12px 12px 16px}form{padding:8px 12px 10px}}
+@media (max-width:560px){#hud{padding:6px 12px;gap:8px}#map{flex-basis:100%}#map .node{padding:4px 6px}#map .node:not([data-s="@"]) .nm{display:none}#hud .hero{margin-left:0}#screen{padding:12px 12px 16px}form{padding:8px 12px 10px}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -226,14 +227,13 @@ footer a{color:var(--dim)}
   <div id="cover">
     <img class="logo" src="/icon.svg" alt="Fångdjupets ikon: ett stenvalv med galler och Java-ånga">
     <h2>FÅNGDJUPET</h2>
-    <p>Ta dig igenom skolan rum för rum och besegra Kapten Martin. Välj med siffror – eller klicka på knapparna under terminalen.</p>
+    <p>Ta dig igenom skolan rum för rum och besegra Kapten Martin. Välj med siffror – eller klicka direkt på menyvalen och i kartan.</p>
     <div class="feat"><span>⚔️ 4 rum</span><span>👹 7 fiender</span><span>📱 DoomScrolla</span><span>🔍 Gömda föremål</span><span>💾 Spara</span></div>
     <p class="msg" id="cover-msg" hidden></p>
     <button type="button" class="primary" id="play">Starta spelet</button>
   </div>
 </main>
 
-<div id="chips" aria-label="Snabbval"></div>
 <form id="form" autocomplete="off">
   <label for="line" aria-hidden="true">&gt;</label>
   <span class="sr">Skriv ditt val</span>
@@ -251,12 +251,11 @@ footer a{color:var(--dim)}
   const $ = id => document.getElementById(id);
   const screen = $("screen"), mainEl = $("main"), fx = $("fx");
   const cover = $("cover"), coverMsg = $("cover-msg"), play = $("play"), restart = $("restart");
-  const form = $("form"), line = $("line"), sendBtn = $("send"), chips = $("chips");
+  const form = $("form"), line = $("line"), sendBtn = $("send");
   const hud = $("hud"), mapEl = $("map"), hudHero = $("hud-hero");
   const calm = matchMedia("(prefers-reduced-motion: reduce)");
 
   let session = null, pos = 0, generation = 0;
-  let sinceInput = "";            // text sedan spelaren senast skickade något (för snabbvalen)
   let ansiHold = "";              // en färgkod som delats mellan två svar
   let red = false;                // ANSI-röd på (GAME OVER)
   let yellow = false;             // ANSI-gul på (något att plocka upp, fiende som väntar)
@@ -485,19 +484,20 @@ footer a{color:var(--dim)}
     if (/^Välj attack/.test(t)) {
       menuBox = openMenu(); attackMenu = true;
       menuBox.firstChild.append(el("div", "ask", "🎯 Välj attack"));
+      if (/Enter = behåll/.test(t)) menuBox.dataset.enter = "Behåll attacken";
       return;
     }
     if (/^Vart vill du gå\?/.test(t)) {
       menuBox = openMenu(); attackMenu = false;
       menuBox.firstChild.append(el("div", "ask", "🧭 Vart vill du gå?"));
+      menuBox.dataset.enter = "Stanna kvar";
       return;
     }
     if ((m = t.match(/^([0-9]+|e)\.\s+(.+)$/))) {
       if (!menuBox) { menuBox = openMenu(); attackMenu = false; }
       options.set(m[1], m[2]);
       if (m[1] === "1" && /^Strid/.test(m[2])) hereFight = /väntar!/.test(m[2]);   // lever någon i rummet?
-      const row = el("div", "opt" + (isYellow ? " hl" : ""));
-      row.append(el("span", "ic", iconFor(m[2])), el("span", "key", m[1]), el("span", null, m[2]));
+      const row = optButton(m[1], m[2], iconFor(m[2]), m[1], isYellow);
       menuBox.firstChild.append(row);
       lastEl = row;
       return;
@@ -606,14 +606,43 @@ footer a{color:var(--dim)}
     return put(box);
   }
 
-  // Raden som väntar på svar ("Ditt val: ") visas längst ner med en blinkande markör
+  // Ett menyval som går att klicka på (eller välja med Tab + Enter). Bara den öppna menyn svarar.
+  function optButton(key, label, icon, value, hl) {
+    const b = el("button", "opt" + (hl ? " hl" : ""));
+    b.type = "button";
+    b.append(el("span", "ic", icon), el("span", "key", key), el("span", null, label));
+    b.addEventListener("click", () => { if (!b.closest(".menu.done")) submit(value); });
+    return b;
+  }
+
+  // Raden som väntar på svar ("Ditt val: ") visas längst ner med en blinkande markör.
+  // "Plocka upp Pilbåge? (j/n):" får två knappar direkt på raden.
   function showPending() {
     if (pendingEl) pendingEl.remove();
     pendingEl = null;
     if (!partial) return;
     pendingEl = el("div", "ln pending" + (partialYellow ? " hl" : ""), partial);
     pendingEl.append(el("span", "cursor"));
+    if (session && /\(j\/n\):\s*$/.test(partial)) {
+      for (const [label, value, icon] of [["Ja, plocka upp", "j", "✋"], ["Nej, lämna kvar", "n", "🚫"]]) {
+        const b = el("button", "jn" + (value === "j" ? " yes" : ""));
+        b.type = "button";
+        b.append(el("span", "ic", icon), label);
+        b.addEventListener("click", () => submit(value));
+        pendingEl.append(b);
+      }
+    }
     screen.appendChild(pendingEl);
+  }
+
+  // Väntar attackmenyn eller rumsvalet på svar: lägg "↵ Behåll attacken" / "↵ Stanna kvar" sist i menyn
+  function addEnterOption() {
+    if (!session || !/(Ditt val|Välj rum)[^\n]*:\s*$/.test(partial)) return;
+    const box = [...screen.querySelectorAll(".menu:not(.done)")].pop();
+    if (!box || !box.dataset.enter || box.querySelector(".opt.enter")) return;
+    const row = optButton("↵", box.dataset.enter, box.dataset.enter === "Stanna kvar" ? "🧍" : "↩️", "");
+    row.classList.add("enter");
+    box.firstChild.append(row);
   }
 
   // Spelets GAME OVER är röd med ANSI-koder (\x1b[31m … \x1b[0m)
@@ -643,8 +672,7 @@ footer a{color:var(--dim)}
       }
     }
     showPending();
-    sinceInput += text.replace(/\x1b\[[0-9;]*m/g, "");
-    updateChips();
+    addEnterOption();
     scrollToEnd();
     // Klickade spelaren på ett rum i kartan: svara på "Välj rum" med rummets siffra
     if (autoRoom && /Välj rum/.test(partial)) {
@@ -682,32 +710,6 @@ footer a{color:var(--dim)}
     scrollToEnd();
   }
 
-  // ---------- snabbval: menyraderna blir knappar ----------
-  function updateChips() {
-    chips.textContent = "";
-    if (!session) return;
-    const t = sinceInput;
-    if (/\(j\/n\):\s*$/.test(t)) {          // "Plocka upp Pilbåge? (j/n): "
-      chip("j", "Ja, plocka upp", "j", "✋", true);
-      chip("n", "Nej, lämna kvar", "n", "🚫");
-      return;
-    }
-    if (!/(Välj ett alternativ|Ditt val|Välj attack|Välj rum)[^\n]*:\s*$/.test(t)) return;
-    const found = new Map();                // senaste menyn vinner om flera syns
-    for (const m of t.matchAll(/^\s*([0-9]+|e)\.\s+(.+?)\s*$/gm)) found.set(m[1], m[2]);
-    for (const [key, label] of found) chip(key, label, key, iconFor(label), /väntar!|något finns här!/.test(label));
-    if (/Enter = behåll/.test(t)) chip("↵", "Behåll attacken", "", "↩️");
-    if (/Enter = stanna/.test(t)) chip("↵", "Stanna kvar", "", "🧍");
-  }
-  function chip(key, label, value, icon, hl) {
-    const b = el("button", hl ? "hl" : null);
-    b.type = "button";
-    b.style.animationDelay = chips.childElementCount * 30 + "ms";
-    b.append(el("span", "ic", icon), el("b", null, key), label);
-    b.addEventListener("click", () => submit(value));
-    chips.appendChild(b);
-  }
-
   // ---------- server ----------
   async function api(path, opts = {}) {
     const r = await fetch(path, { cache: "no-store", ...opts });
@@ -724,7 +726,6 @@ footer a{color:var(--dim)}
   }
 
   function showCover(message, buttonText) {
-    chips.textContent = "";
     coverMsg.hidden = !message;
     coverMsg.textContent = message || "";
     play.textContent = buttonText || "Starta spelet";
@@ -747,7 +748,7 @@ footer a{color:var(--dim)}
   }
 
   function resetView() {
-    pos = 0; sinceInput = ""; ansiHold = ""; red = false; yellow = false;
+    pos = 0; ansiHold = ""; red = false; yellow = false;
     partialYellow = false; inMap = false; mapRows = []; mapState = []; autoRoom = null; mapEl.textContent = "";
     partial = ""; partialRed = false; pendingEl = null;
     lastEl = null; artBox = null; menuBox = null; options = new Map(); attackMenu = false; nextArt = "";
@@ -815,8 +816,6 @@ footer a{color:var(--dim)}
   async function submit(value) {
     if (!session) return;
     answered(value);
-    sinceInput = "";
-    chips.textContent = "";
     line.value = "";
     line.focus({ preventScroll: true });
     try {
