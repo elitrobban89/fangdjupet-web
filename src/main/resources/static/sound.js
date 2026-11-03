@@ -48,7 +48,12 @@
     boss: { scale: "insen", root: 62, bpm: 168, lead: "sawtooth", vol: 0.7,
       melody: "0 1 0 -1 0 _ 3 _ 2 1 2 3 4 _ _ . 5 4 3 4 3 _ 2 _ 1 _ 0 _ -1 _ _ .",
       bass:   "-5 . -5 -5 . -5 -4 . -5 . -5 -5 . -3 -4 .",
-      drums:  "k.hsk.hsk.hskkss" }
+      drums:  "k.hsk.hsk.hskkss" },
+    // Martins fas 2 (Utterly explained): samma låt, snabbare och en ton högre – som i konsolspelet
+    bossFast: { scale: "insen", root: 64, bpm: 228, lead: "sawtooth", vol: 0.75,
+      melody: "0 1 0 -1 0 _ 3 _ 2 1 2 3 4 _ _ . 5 4 3 4 3 _ 2 _ 1 _ 0 _ -1 _ _ .",
+      bass:   "-5 . -5 -5 . -5 -4 . -5 . -5 -5 . -3 -4 .",
+      drums:  "kkhskkhskkhskkss" }
   };
   // Korta slingor som spelas en gång
   const JINGLES = {

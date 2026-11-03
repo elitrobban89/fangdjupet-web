@@ -42,6 +42,31 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 #hud[hidden]{display:none}
 #hud .hero{display:flex;align-items:center;gap:8px;margin-left:auto}
 #hud .bar{width:110px}
+#hud .hero.infight{display:none}   /* i striden står hjältens mätare i stridspanelen i stället */
+
+/* ── Stridspanelen: en fast mätare per kämpe, hjälten till vänster och fienden till höger ── */
+#fight{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:6px 26px;padding:9px 16px;
+  border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(95,191,138,.06),transparent 45%,transparent 55%,rgba(255,107,91,.07));
+  font-family:var(--mono);animation:fightIn .35s ease-out}
+#fight[hidden]{display:none}
+#fight .side{display:flex;flex-direction:column;gap:4px;flex:1 1 260px;min-width:0}
+#fight .side.foes{align-items:flex-end}
+#fight .vs{font-weight:900;color:var(--accent);letter-spacing:.1em;font-size:.95em}
+#fight .hp{gap:.6em}
+#fight .hp .name{min-width:0;font-weight:700}
+#fight .bar{flex:1 1 auto;width:auto;min-width:60px;max-width:230px;height:.95em}
+#fight .hp{width:100%;max-width:470px}
+#fight .hp.foe{justify-content:flex-end}
+#fight .vs{flex:none}
+#fight .hp .num{flex:none}
+#fight .hp.hit{animation:rowHit .45s ease-out}
+#fight .hp.healed{animation:rowHeal .6s ease-out}
+#fight.over{opacity:.55;transition:opacity .6s}
+@keyframes fightIn{from{opacity:0;transform:translateY(-8px)}}
+@keyframes rowHit{0%,100%{transform:none}20%{transform:translateX(-5px)}45%{transform:translateX(4px)}70%{transform:translateX(-2px)}}
+@keyframes rowHeal{0%{filter:none}35%{filter:drop-shadow(0 0 8px rgba(95,191,138,.9))}100%{filter:none}}
+@media (max-width:560px){#fight{padding:7px 12px}#fight .vs{display:none}#fight .side.foes{align-items:flex-start}}
+@media (prefers-reduced-motion: reduce){#fight,#fight .hp.hit,#fight .hp.healed{animation:none}}
 
 /* ── Kartan över rummen, alltid synlig. Klicka på ett öppet rum för att gå dit. ── */
 #map{display:flex;align-items:center;flex:1 1 420px;min-width:0}
@@ -337,6 +362,7 @@ footer a{color:var(--dim)}
     <nav id="map" aria-label="Karta över rummen"></nav>
     <span class="hero" id="hud-hero" hidden></span>
   </div>
+  <div id="fight" hidden aria-label="Hälsan i striden"><div class="side me"></div><span class="vs">VS</span><div class="side foes"></div></div>
   <div id="bg" aria-hidden="true"></div>
   <div id="screen" role="log" aria-live="polite" aria-label="Spelets utskrift" tabindex="0"></div>
   <div id="fx" aria-hidden="true"></div>
@@ -650,9 +676,9 @@ footer a{color:var(--dim)}
     else if (/\(\+\d+ hp\)/.test(t) && /kaffe|kanelbulle|dricker|tar en /.test(t)) steamFx(/kanelbulle/.test(t) ? "🥐" : "☕");
     else if (/^Frida dyker upp/.test(t)) fairyFx();
     else if (/^Äventyret är sparat/.test(t)) { if (!calm.matches) sprite("💾", "disk", 1250); }
-    else if (/besegrades av|dog av sin egen attack/.test(t)) { danger(false); gameOverFx(); }
-    else if (/ vinner Fångdjupet!$/.test(t)) { danger(false); fireworks(); }
-    else if (/ vinner mot .*!$/.test(t)) danger(false);
+    else if (/besegrades av|dog av sin egen attack/.test(t)) { danger(false); endFight(); gameOverFx(); }
+    else if (/ vinner Fångdjupet!$/.test(t)) { danger(false); endFight(); fireworks(); }
+    else if (/ vinner mot .*!$/.test(t)) { danger(false); endFight(); }
   }
   // Repliker skrivs fram bokstav för bokstav, som i konsolen
   function typeInto(node, text) {
@@ -685,16 +711,72 @@ footer a{color:var(--dim)}
     bar.append(fill);
     return { bar, fill, pct };
   }
+  // Stridspanelen: en rad per kämpe som uppdateras på plats, i stället för en ny mätare i loggen för varje slag
+  const fightEl = document.getElementById("fight");
+  const fightMe = fightEl.querySelector(".me"), fightFoes = fightEl.querySelector(".foes");
+  const fightRows = new Map();
+  let fightDone = true, fightHide = null;
+  function fightRow(name, max, prev) {
+    if (fightDone) {                                   // en ny strid: töm panelen
+      fightRows.clear(); fightMe.textContent = ""; fightFoes.textContent = "";
+      fightDone = false; fightEl.classList.remove("over");
+      if (fightEl.hidden) { fightEl.hidden = false; restartAnim(fightEl, "in"); }
+    }
+    clearTimeout(fightHide);
+    hudHero.classList.add("infight");
+    let r = fightRows.get(name);
+    if (!r) {
+      const me = name === heroName;
+      const row = el("div", "hp " + (me ? "me" : "foe"));
+      const ic = el("span", "ic", me ? "❤️" : "🖤"), num = el("span", "num");
+      const { bar, fill } = barNode(prev, max);
+      fill.style.width = (max > 0 ? prev / max * 100 : 0) + "%";
+      if (me) row.append(ic, el("span", "name", name), bar, num);
+      else row.append(num, bar, el("span", "name", name), ic);   // fienden speglad: mätaren mot mitten
+      (me ? fightMe : fightFoes).append(row);
+      r = { row, ic, bar, fill, num };
+      fightRows.set(name, r);
+    }
+    return r;
+  }
+  function endFight() {
+    if (fightDone) return;
+    fightDone = true;
+    fightEl.classList.add("over");
+    clearTimeout(fightHide);
+    fightHide = setTimeout(() => { if (fightDone) { fightEl.hidden = true; hudHero.classList.remove("infight"); } }, 2400);
+  }
+  function resetFight() {
+    clearTimeout(fightHide); fightDone = true; fightRows.clear();
+    fightMe.textContent = ""; fightFoes.textContent = ""; fightEl.hidden = true; hudHero.classList.remove("infight");
+  }
+
   function hpLine(name, cur, max) {
     const prev = hpSeen.has(name) ? hpSeen.get(name) : max;
     hpSeen.set(name, cur);
-    const row = el("div", "hp" + (cur === 0 ? " dead" : ""));
-    const { bar, fill, pct } = barNode(cur, max);
-    fill.style.width = (max > 0 ? prev / max * 100 : 0) + "%";
-    row.append(el("span", "ic", cur === 0 ? "💀" : name === heroName ? "❤️" : "🖤"), el("span", "name", name), bar,
-      el("span", "num", cur + "/" + max));
-    put(row);
-    requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = pct * 100 + "%"; }));
+    const pct = max > 0 ? cur / max : 0;
+    let row, bar;
+    if (inFight) {
+      const r = fightRow(name, max, prev);
+      row = r.row; bar = r.bar;
+      r.fill.classList.remove("g", "y", "r");
+      r.fill.classList.add(pct > .5 ? "g" : pct > .25 ? "y" : "r");
+      r.fill.style.width = pct * 100 + "%";
+      r.num.textContent = cur + "/" + max;
+      r.ic.textContent = cur === 0 ? "💀" : name === heroName ? "❤️" : "🖤";
+      row.classList.toggle("dead", cur === 0);
+      if (cur < prev) restartAnim(row, "hit");
+      else if (cur > prev) restartAnim(row, "healed");
+    } else {                                           // utanför striden (kaffet, Fridas drycker): en rad i loggen som förut
+      row = el("div", "hp" + (cur === 0 ? " dead" : ""));
+      const b = barNode(cur, max);
+      bar = b.bar;
+      b.fill.style.width = (max > 0 ? prev / max * 100 : 0) + "%";
+      row.append(el("span", "ic", cur === 0 ? "💀" : name === heroName ? "❤️" : "🖤"), el("span", "name", name), bar,
+        el("span", "num", cur + "/" + max));
+      put(row);
+      requestAnimationFrame(() => requestAnimationFrame(() => { b.fill.style.width = pct * 100 + "%"; }));
+    }
     const diff = cur - prev;
     if (diff) {
       const f = el("span", "float " + (diff < 0 ? "minus" : "plus"), (diff < 0 ? "−" : "+") + Math.abs(diff));
@@ -704,7 +786,7 @@ footer a{color:var(--dim)}
     if (name === heroName) {
       updateHud(cur, max);
       if (diff < 0) { shake(cur === 0 || -diff >= 6); flash("red"); }
-      if (diff < 0 && cur > 0 && cur * 4 <= max) { Sound.sfx("lowhp"); row.classList.add("low"); }   // varning: lite hp kvar
+      if (diff < 0 && cur > 0 && cur * 4 <= max) { Sound.sfx("lowhp"); restartAnim(row, "low"); }   // varning: lite hp kvar
       danger(cur > 0 && cur * 4 <= max);   // hjärtslaget i kanten så länge hp är lågt
     } else if (cur === 0 && diff < 0) koFx(name);
   }
@@ -740,7 +822,10 @@ footer a{color:var(--dim)}
       artBox.append(row);
       if (artIdx === 1 && screen.querySelectorAll(".art").length === 1) artBox.classList.add("title");   // första bilden: FANGDJUPET
       if (/V A N N/.test(t)) { artBox.classList.add("victory"); confetti(); flash("green"); }
-      if (/UTTERLY EXPLAINED/.test(t)) { titleCard("FAS 2 · UTTERLY EXPLAINED", "boss"); shake(true); flash("red"); }
+      if (/UTTERLY EXPLAINED/.test(t) && fightSong !== "bossFast") {   // första gången i fas 2: kort, och musiken går upp i tempo
+        fightSong = "bossFast"; Sound.music("bossFast");
+        titleCard("FAS 2 · UTTERLY EXPLAINED", "boss"); shake(true); flash("red");
+      }
       if (/S K O L A/.test(t)) artBox.dataset.school = "1";   // skolbyggnaden ovanför huvudmenyn
       return;
     }
@@ -1117,7 +1202,7 @@ footer a{color:var(--dim)}
     partialYellow = false; inMap = false; mapRows = []; mapState = []; autoRoom = null; mapEl.textContent = "";
     partial = ""; partialRed = false; pendingEl = null;
     lastEl = null; artBox = null; menuBox = null; options = new Map(); attackMenu = false; nextArt = "";
-    heroName = null; expectHero = false; inFight = false; hpSeen.clear();
+    heroName = null; expectHero = false; inFight = false; hpSeen.clear(); resetFight();
     screen.textContent = "";
     hud.hidden = true; hudHero.hidden = true;
   }
