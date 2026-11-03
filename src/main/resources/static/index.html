@@ -12,8 +12,8 @@
 <meta property="og:image" content="/card.svg">
 <style>
 :root{
-  --bg:#0d1014; --panel:#12161c; --panel2:#171c24; --line:#232a33; --ink:#d5dde6; --dim:#7d8996;
-  --accent:#e9b25e; --accent-ink:#1a1206; --you:#9fc3ee; --red:#ff6b5b; --ok:#74bc96; --art:#c8b48e; --magic:#b79cff;
+  --bg:#0d1014; --panel:#12161c; --panel2:#171c24; --line:#2c3540; --ink:#eef3f8; --dim:#a3afbc;
+  --accent:#e9b25e; --accent-ink:#1a1206; --you:#9fc3ee; --red:#ff6b5b; --ok:#7fd3a6; --art:#f0d7a4; --magic:#b79cff;
   --mono:"Cascadia Mono","JetBrains Mono","SF Mono",Consolas,"Liberation Mono",ui-monospace,monospace;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -38,7 +38,7 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 
 /* ── HUD: rummet och hjältens hp, alltid synligt ── */
 #hud{display:flex;align-items:center;gap:14px;padding:7px 16px;border-bottom:1px solid var(--line);background:var(--panel2);
-  font-family:var(--mono);font-size:12.5px;flex-wrap:wrap}
+  font-family:var(--mono);font-size:14px;flex-wrap:wrap}
 #hud[hidden]{display:none}
 #hud .hero{display:flex;align-items:center;gap:8px;margin-left:auto}
 #hud .bar{width:110px}
@@ -54,7 +54,8 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 #fight .vs{font-weight:900;color:var(--accent);letter-spacing:.1em;font-size:.95em}
 #fight .hp{gap:.6em}
 #fight .hp .name{min-width:0;font-weight:700}
-#fight .bar{flex:1 1 auto;width:auto;min-width:60px;max-width:230px;height:.95em}
+#fight .bar{flex:1 1 auto;width:auto;min-width:60px;max-width:250px;height:1.15em}
+#fight{font-size:15px}
 #fight .hp{width:100%;max-width:470px}
 #fight .hp.foe{justify-content:flex-end}
 #fight .vs{flex:none}
@@ -71,11 +72,11 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 /* ── Kartan över rummen, alltid synlig. Klicka på ett öppet rum för att gå dit. ── */
 #map{display:flex;align-items:center;flex:1 1 420px;min-width:0}
 #map .node{display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--line);border-radius:9px;
-  background:var(--panel);color:var(--ink);font-family:var(--mono);font-size:12px;white-space:nowrap;position:relative;
+  background:var(--panel);color:var(--ink);font-family:var(--mono);font-size:13.5px;white-space:nowrap;position:relative;
   transition:border-color .3s,background .3s,opacity .3s,transform .1s}
 #map .node:not([disabled]):hover{border-color:var(--accent);transform:translateY(-1px)}
 #map .node[disabled]{cursor:default}
-#map .node .mk{font-size:11px;font-weight:700;min-width:1em;text-align:center}
+#map .node .mk{font-size:12.5px;font-weight:700;min-width:1em;text-align:center}
 #map .link{flex:1 1 18px;min-width:8px;max-width:46px;height:2px;background:var(--line);transition:background .4s}
 #map .link.on{background:linear-gradient(90deg,var(--accent),#b98a45)}
 #map .node[data-s="@"]{border-color:var(--accent);background:rgba(233,178,94,.14);color:#ffe2b0;
@@ -86,7 +87,7 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 #map .node[data-s="!"]{border-color:rgba(255,107,91,.45)}
 #map .node[data-s="?"]{border-style:dashed;border-color:#6b5a3c}
 #map .node[data-s="?"] .mk{color:var(--accent)}
-#map .node[data-s="#"]{opacity:.42}
+#map .node[data-s="#"]{opacity:.7;color:var(--dim)}
 #map .node.nope{animation:nope .35s}
 @keyframes here{50%{box-shadow:0 0 0 1px rgba(233,178,94,.35),0 0 26px -2px rgba(233,178,94,.85)}}
 @keyframes nope{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
@@ -122,7 +123,7 @@ button.opt:nth-child(n+8){animation-delay:.28s}
   text-shadow:0 0 28px rgba(233,178,94,.25);animation:breathe 6s ease-in-out infinite}
 @keyframes breathe{50%{color:rgba(233,178,94,.21)}}
 #screen{position:relative;z-index:1;flex:1;min-height:0;padding:14px 16px 18px;overflow:auto;
-  font-family:var(--mono);font-size:clamp(11px,2.7vw,14.5px);line-height:1.38;tab-size:4}
+  font-family:var(--mono);font-size:clamp(12.5px,3vw,16.5px);line-height:1.45;tab-size:4}
 .ln{white-space:pre;min-height:1.38em}
 .ev{white-space:pre-wrap;display:flex;gap:.55em;align-items:baseline;padding:1px 0}
 .ic{flex:none;width:1.4em;text-align:center;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;font-size:.95em}
@@ -133,8 +134,8 @@ button.opt:nth-child(n+8){animation-delay:.28s}
 /* rum och rubriker */
 .room{margin:14px 0 2px;color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:1.05em;
   border-left:3px solid var(--accent);padding-left:10px;white-space:pre-wrap}
-.desc{color:var(--dim);font-style:italic;padding-left:13px;white-space:pre-wrap}
-.menuhead{margin-top:12px;color:var(--dim);font-size:.85em;letter-spacing:.14em;text-transform:uppercase;white-space:pre-wrap}
+.desc{color:#c9d3de;font-style:italic;padding-left:13px;white-space:pre-wrap}
+.menuhead{margin-top:14px;color:var(--accent);font-weight:700;font-size:.95em;letter-spacing:.14em;text-transform:uppercase;white-space:pre-wrap}
 .menuhead::before{content:"── "}
 .menuhead::after{content:" ──"}
 
@@ -149,7 +150,7 @@ button.opt{display:flex;gap:.6em;align-items:baseline;width:100%;text-align:left
 .menu:not(.done) button.opt:hover{background:rgba(233,178,94,.10)}
 .menu:not(.done) button.opt:active{background:rgba(233,178,94,.18)}
 button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
-.opt .key{color:var(--accent);font-weight:700;min-width:1.2em}
+.opt .key{color:var(--accent);font-weight:800;min-width:1.6em;text-align:center;background:rgba(233,178,94,.13);border:1px solid rgba(233,178,94,.35);border-radius:5px;padding:0 .3em}
 .opt.enter{color:var(--dim)}
 .jn{margin-left:10px;padding:2px 10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit;font-size:.9em;border-radius:6px;cursor:pointer;display:inline-flex;gap:5px;align-items:center;vertical-align:middle}
 .jn:hover{border-color:var(--accent)}
@@ -185,17 +186,17 @@ button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
 /* hp-staplar */
 .hp{display:flex;align-items:center;gap:.7em;white-space:pre;padding:1px 0}
 .hp .name{min-width:9ch;color:var(--ink)}
-.bar{position:relative;flex:none;width:clamp(90px,24vw,180px);height:.8em;border-radius:99px;background:#232a33;overflow:visible}
+.bar{position:relative;flex:none;width:clamp(90px,24vw,180px);height:1em;border-radius:99px;background:#2a323c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);overflow:visible}
 .bar .fill{position:absolute;inset:0 auto 0 0;border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.2,1),background-color .6s;
   box-shadow:0 0 10px -2px currentColor}
 .bar .fill.g{background:#5fbf8a;color:#5fbf8a}.bar .fill.y{background:#e9b25e;color:#e9b25e}.bar .fill.r{background:#ff6b5b;color:#ff6b5b}
-.hp .num{color:var(--dim);font-size:.9em}
+.hp .num{color:var(--ink);font-weight:700;font-size:.95em}
 .hp.dead .name{color:var(--dim);text-decoration:line-through}
 .float{position:absolute;right:-.2em;top:-1.1em;font-weight:700;font-size:.9em;pointer-events:none;animation:rise 1.1s ease-out forwards}
 .float.minus{color:var(--red)}.float.plus{color:var(--ok)}
 
 /* ASCII-bilder */
-.art{color:var(--art);margin:6px 0}
+.art{color:var(--art);margin:8px 0;font-weight:600;text-shadow:0 0 10px rgba(240,215,164,.22)}
 .art .ln{animation:draw .35s ease-out backwards}
 .art.atk{color:var(--you);text-shadow:0 0 8px rgba(159,195,238,.35)}
 .art.atk .ln{animation:slash .32s cubic-bezier(.2,.9,.2,1) backwards}
@@ -451,7 +452,7 @@ footer a{color:var(--dim)}
   const OPTION_ICONS = [
     [/\(låst\)/, "🔒"], [/Strid/, "⚔️"], [/Gå till/, "🚪"], [/utrustning/, "🎒"], [/Spara/, "💾"], [/Leta/, "🔍"], [/Avsluta/, "⏏️"],
     [/Starta nytt/, "✨"], [/Fortsätt/, "▶️"], [/Närstrid/, "🗡️"], [/Magi/, "🔮"], [/Avstånd/, "🏹"],
-    [/DoomScroll/i, "📱"], [/stressboll/i, "🎾"], [/JavaQuiz/, "❓"], [/Java-boken/, "📖"], [/StackOverflow/, "📚"], [/Dela skärm/, "🖥️"],
+    [/DoomScroll/i, "📱"], [/stressboll/i, "🎾"], [/JavaQuiz/, "❓"], [/Java-boken/, "📖"], [/StackOverflow/, "📚"], [/Dela skärm/, "🖥️"], [/USB-minnet/, "🦠"],
     [/Skoldörren/, "🚪"], [/Kafferummet/, "☕"], [/Korridoren/, "🧹"], [/Lektionssalen/, "🎓"]];
 
   // ---------- kartan ----------
