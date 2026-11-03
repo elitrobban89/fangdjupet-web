@@ -180,6 +180,40 @@ button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
 #fx .flash.amber{background:radial-gradient(ellipse at center,rgba(233,178,94,.10),transparent 60%)}
 #fx .flash.green{background:radial-gradient(ellipse at center,rgba(116,188,150,.16),transparent 65%)}
 #fx .bit{position:absolute;top:-20px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
+/* ---- animationerna: attacker som flyger, smällar, siffror och titelkort ---- */
+#fx .sp{position:absolute;will-change:transform,opacity;white-space:nowrap}
+#fx .arrow{left:-12%;top:40%;font-size:46px;color:var(--accent);text-shadow:0 0 14px rgba(233,178,94,.85);animation:arrowFly .65s cubic-bezier(.3,.1,.6,1) forwards}
+@keyframes arrowFly{to{left:106%}}
+#fx .spark{left:50%;top:42%;font-size:24px;color:#b79cff;text-shadow:0 0 12px #b79cff;animation:spark .9s ease-out both}
+#fx .spark.gold{color:#ffd27a;text-shadow:0 0 12px #ffd27a}
+@keyframes spark{from{transform:rotate(var(--a)) translateX(0) scale(.4);opacity:1}to{transform:rotate(var(--a)) translateX(min(34vw,170px)) scale(1.3);opacity:0}}
+#fx .slashfx{left:18%;top:22%;width:64%;height:7px;border-radius:4px;background:linear-gradient(90deg,transparent,#fff 40%,var(--accent),transparent);box-shadow:0 0 20px rgba(255,255,255,.7);transform-origin:left center;animation:slashfx .5s ease-out forwards}
+#fx .slashfx.two{top:30%;animation-delay:.09s;transform:rotate(28deg) scaleX(0)}
+@keyframes slashfx{0%{transform:rotate(28deg) scaleX(0);opacity:1}55%{transform:rotate(28deg) scaleX(1);opacity:1}100%{transform:rotate(28deg) scaleX(1) translateY(6px);opacity:0}}
+#fx .code{bottom:8%;font:700 22px/1 ui-monospace,Consolas,monospace;color:#9fc3ee;text-shadow:0 0 10px rgba(159,195,238,.6);animation:codeUp 1.3s ease-out both}
+@keyframes codeUp{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(-55vh) rotate(14deg);opacity:0}}
+#fx .ball{font-size:36px;animation:ballArc .9s linear forwards}
+@keyframes ballArc{0%{left:4%;top:72%;transform:rotate(0)}25%{left:27%;top:30%}50%{left:50%;top:16%}75%{left:72%;top:30%}88%{left:84%;top:46%;transform:rotate(540deg) scale(1)}94%{transform:rotate(600deg) scale(1.4,.6)}100%{left:90%;top:52%;transform:rotate(640deg) scale(1);opacity:0}}
+#fx .boom{left:50%;top:38%;font-size:66px;animation:boom .6s ease-out forwards}
+@keyframes boom{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}60%{transform:translate(-50%,-50%) scale(1.3);opacity:1}100%{transform:translate(-50%,-50%) scale(1.7);opacity:0}}
+#fx .bub{bottom:-6%;font-size:28px;animation:bubUp 1.5s ease-in both}
+@keyframes bubUp{to{transform:translate(24px,-80vh);opacity:0}}
+#fx .blah{font:700 17px/1 ui-monospace,Consolas,monospace;color:#e9d9b8;background:rgba(18,18,28,.88);border:1px solid #e9d9b8;border-radius:14px;padding:6px 11px;animation:blahPop 1.3s ease-out both}
+@keyframes blahPop{0%{transform:scale(.3);opacity:0}18%{transform:scale(1.12);opacity:1}80%{opacity:1}100%{transform:translateY(-30px);opacity:0}}
+#fx .num{left:50%;top:32%;font:800 clamp(38px,8vw,62px)/1 system-ui,sans-serif;text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 18px currentColor;animation:numUp 1.1s cubic-bezier(.2,1.4,.4,1) forwards}
+#fx .num.dmg{color:#ffd27a} #fx .num.hurt{color:#ff6b5b;top:48%} #fx .num.heal{color:#74bc96}
+@keyframes numUp{0%{transform:translateX(-50%) scale(.3);opacity:0}25%{transform:translateX(-50%) scale(1.25);opacity:1}70%{transform:translateX(-50%) translateY(-18px) scale(1);opacity:1}100%{transform:translateX(-50%) translateY(-60px);opacity:0}}
+#fx .card{left:0;right:0;top:36%;text-align:center;font:800 clamp(26px,6vw,56px)/1.1 system-ui,sans-serif;letter-spacing:.12em;color:var(--accent);text-shadow:0 0 26px rgba(233,178,94,.65);animation:card 1.9s ease-out forwards}
+#fx .card.boss{color:#ff6b5b;text-shadow:0 0 34px rgba(255,60,40,.85)}
+#fx .card.room{font-size:clamp(20px,4.2vw,38px);letter-spacing:.2em}
+#fx .card.foe{font-size:clamp(18px,3.6vw,32px);color:#ffb38a}
+@keyframes card{0%{transform:scale(1.6);opacity:0;filter:blur(8px)}18%{transform:scale(1);opacity:1;filter:none}75%{opacity:1}100%{transform:scale(.94);opacity:0}}
+#fx .plus{bottom:16%;font:800 30px/1 system-ui,sans-serif;color:#74bc96;text-shadow:0 0 12px rgba(116,188,150,.8);animation:bubUp 1.1s ease-out both}
+#fx .flop{left:46%;top:28%;font-size:46px;animation:flop .85s ease-in forwards}
+@keyframes flop{30%{transform:rotate(-30deg) translateX(-20px)}100%{transform:translateY(42vh) rotate(540deg);opacity:0}}
+#fx .missword{left:50%;top:40%;font:800 clamp(26px,5vw,44px)/1 system-ui,sans-serif;color:#9aa3b2;letter-spacing:.2em;animation:missword .8s ease-out forwards}
+@keyframes missword{0%{transform:translateX(-80%);opacity:0}30%{transform:translateX(-50%);opacity:1}100%{transform:translateX(10%);opacity:0}}
+.say .q.typing::after{content:"▍";color:var(--accent);animation:blink .8s steps(1) infinite}
 .shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
 .shake.hard{animation:shake .6s cubic-bezier(.36,.07,.19,.97)}
 
@@ -451,6 +485,49 @@ footer a{color:var(--dim)}
     fx.append(f);
     setTimeout(() => f.remove(), 500);
   }
+  // Animationerna i effektlagret (#fx). Inget av det körs med "minska rörelse".
+  function sprite(text, cls, ms) {
+    const s = el("span", "sp " + cls, text);
+    fx.append(s);
+    setTimeout(() => s.remove(), ms || 1400);
+    return s;
+  }
+  function attackFx(kind) {
+    if (calm.matches) return;
+    if (kind === "shoot") sprite("➵", "arrow", 750);
+    else if (kind === "magic") for (let i = 0; i < 12; i++) { const s = sprite("✦", "spark", 1000); s.style.setProperty("--a", i * 30 + "deg"); s.style.animationDelay = i * 12 + "ms"; }
+    else if (kind === "slash") { sprite("", "slashfx", 600); sprite("", "slashfx two", 700); }
+    else if (kind === "page" || kind === "smart") ["{", "}", ";", "( )", "</>", "==", "new", "λ"].forEach((c, i) => {
+      const s = sprite(c, "code", 1500); s.style.left = 18 + i * 9 + "%"; s.style.animationDelay = i * 55 + "ms"; });
+    else if (kind === "boing") sprite("🎾", "ball", 950);
+  }
+  function impactFx(kind) {
+    if (calm.matches) return;
+    if (kind === "splat" || kind === "fizz" || kind === "hiss") for (let i = 0; i < 9; i++) {
+      const b = sprite(kind === "hiss" ? "✳️" : "🫧", "bub", 1600); b.style.left = 10 + Math.random() * 80 + "%"; b.style.animationDelay = i * 70 + "ms"; }
+    else if (kind === "blah") ["bla", "bla bla", "...och så en gång till", "bla"].forEach((w, i) => {
+      const b = sprite(w, "blah", 1400); b.style.left = 8 + (i % 2) * 50 + Math.random() * 12 + "%"; b.style.top = 14 + i * 13 + "%"; b.style.animationDelay = i * 140 + "ms"; });
+    else if (kind === "zap") sprite("⚡", "boom", 650);
+    else sprite("💥", "boom", 650);
+  }
+  function bigNumber(text, cls) { if (!calm.matches) sprite(text, "num " + cls, 1150); }
+  function titleCard(text, cls) { if (!calm.matches) sprite(text, "card " + cls, 1950); }
+  function plusFx(n) {
+    if (calm.matches) return;
+    for (let i = 0; i < (n || 7); i++) { const s = sprite("+", "plus", 1300); s.style.left = 30 + Math.random() * 40 + "%"; s.style.animationDelay = i * 80 + "ms"; }
+  }
+  function starBurst() {
+    if (calm.matches) return;
+    for (let i = 0; i < 14; i++) { const s = sprite("★", "spark gold", 1100); s.style.setProperty("--a", i * 26 + "deg"); }
+  }
+  // Repliker skrivs fram bokstav för bokstav, som i konsolen
+  function typeInto(node, text) {
+    if (calm.matches) { node.textContent = text; return; }
+    node.textContent = ""; node.classList.add("typing");
+    let i = 0;
+    const tick = () => { node.textContent = text.slice(0, ++i); if (i < text.length) setTimeout(tick, 16); else node.classList.remove("typing"); };
+    tick();
+  }
   function confetti() {
     if (calm.matches) return;
     const colors = ["#e9b25e", "#ffd27a", "#74bc96", "#9fc3ee", "#ff6b5b", "#b79cff"];
@@ -576,40 +653,43 @@ footer a{color:var(--dim)}
     // Striden
     if ((m = t.match(/^Hero: (.+) skada: (\d+)$/))) {
       inFight = true;
-      Sound.sfx(/ citerar /.test(t) ? "page" : /kastar stressbollen på/.test(t) ? "boing" : attackSound());
+      const kind = / citerar /.test(t) ? "page" : /kastar stressbollen på/.test(t) ? "boing" : attackSound();
+      Sound.sfx(kind); attackFx(kind); bigNumber("−" + m[2], "dmg");
       ev("hit", "⚔️", m[1], el("span", "dmg", "−" + m[2]));
       flash("amber");
       return;
     }
     // Dela skärm: hp i stället för skada
     if ((m = t.match(/^Hero: (.+ delar skärmen .+): \+(\d+) hp(.*)$/))) {
-      inFight = true; Sound.sfx("chime"); flash("green");
+      inFight = true; Sound.sfx("chime"); flash("green"); plusFx(9); bigNumber("+" + m[2], "heal");
       const row = ev("heal", "🖥️", m[1] + m[3], el("span", "dmg heal", "+" + m[2] + " hp"));
       restartAnim(row, "appear");
       return;
     }
-    if (/^Hero: .*slinter på sidan/.test(t)) { inFight = true; Sound.sfx("slip"); ev("miss slip", "📖", t.slice(6)); shake(false); return; }
-    if (/^Hero: /.test(t)) { inFight = true; Sound.sfx("whoosh"); ev("miss", "💨", t.slice(6)); return; }
+    if (/^Hero: .*slinter på sidan/.test(t)) { inFight = true; Sound.sfx("slip"); if (!calm.matches) sprite("📖", "flop", 900); ev("miss slip", "📖", t.slice(6)); shake(false); return; }
+    if (/^Hero: /.test(t)) { inFight = true; Sound.sfx("whoosh"); if (!calm.matches) sprite("MISS", "missword", 850); ev("miss", "💨", t.slice(6)); return; }
     // Stressbollen kläms i början av rundan
     if ((m = t.match(/^(.+) klämmer stressbollen: \+(\d+) hp$/))) {
-      Sound.sfx("squeak"); flash("green");
+      Sound.sfx("squeak"); flash("green"); plusFx(4);
       const row = ev("heal squeeze", "🎾", m[1] + " klämmer stressbollen", el("span", "dmg heal", "+" + m[2] + " hp"));
       restartAnim(row, "squish");
       return;
     }
     if ((m = t.match(/^Enemy: (.+) skada: (\d+)$/))) {
       inFight = true; expectHero = true;
-      Sound.sfx(enemySound(t));
+      Sound.sfx(enemySound(t)); impactFx(enemySound(t)); bigNumber("−" + m[2], "hurt");
       ev("hurt", "💥", m[1], el("span", "dmg", "−" + m[2]));
       return;
     }
     if (/^Enemy: /.test(t)) { inFight = true; expectHero = true; Sound.sfx("whoosh"); ev("dodge", "🛡️", t.slice(7)); return; }
     if (/ vinner Fångdjupet!$/.test(t)) { inFight = false; roomSong = "title"; Sound.jingle("final", "title"); ev("win big", "👑", t); return; }
-    if (/ vinner mot .*!$/.test(t)) { inFight = false; Sound.jingle("win", roomSong); ev("win", "🏆", t); return; }
+    if (/ vinner mot .*!$/.test(t)) { inFight = false; Sound.jingle("win", roomSong); starBurst(); ev("win", "🏆", t); return; }
     if ((m = t.match(/^Fiende (.+) dyker upp!$/))) {
       // stridsmusik: Martin har sin egen, och StädHäxan slåss till en snabbare klibbig låt
       fightSong = /Martin/.test(m[1]) ? "boss" : roomSong === "sticky" ? "stickyFight" : "battle";
-      Sound.sfx("alert"); Sound.music(fightSong); ev("appear", "👹", t); return; }
+      Sound.sfx("alert"); Sound.music(fightSong);
+      if (/Martin/.test(m[1])) { titleCard(m[1].toUpperCase(), "boss"); shake(true); flash("red"); } else titleCard(m[1], "foe");
+      ev("appear", "👹", t); return; }
     if (/^Men vänta\.\.\./.test(t)) { Sound.sfx("alert"); ev("appear", "❗", t); shake(false); return; }
     if (/blir arg!|skrattar elakt/.test(t)) { Sound.sfx(/skrattar/.test(t) ? "laugh" : "alert"); ev("danger", /skrattar/.test(t) ? "😈" : "😡", t); shake(true); flash("red"); return; }
     if (/besegrades av|dog av sin egen attack/.test(t)) { inFight = false; roomSong = "title"; Sound.jingle("lose", null); ev("danger", "☠️", t); return; }
@@ -617,7 +697,9 @@ footer a{color:var(--dim)}
     // Repliker: Trollkarl: "Thou shall not pass!"
     if ((m = t.match(/^([^:"]{1,30}): "(.*)"$/))) {
       Sound.sfx(/^Lektor Martin/.test(m[1]) ? "blah" : "talk");
-      ev("say", "💬", el("span", "who", m[1] + " "), el("span", "q", "“" + m[2] + "”"));
+      const q = el("span", "q");
+      ev("say", "💬", el("span", "who", m[1] + " "), q);
+      typeInto(q, "“" + m[2] + "”");
       return;
     }
 
@@ -626,6 +708,7 @@ footer a{color:var(--dim)}
       roomSong = plain(t) === "Fangdjupet" ? "title" : ROOM_SONGS[ROOMS.indexOf(t)];
       if (!inFight) Sound.music(roomSong);
       put(el("div", "room", (plain(t) === "Fangdjupet" ? "🏰 " : "📍 ") + t));
+      if (plain(t) !== "Fangdjupet") titleCard(t, "room");
       if (plain(t) === "Fangdjupet") bg.classList.add("on");   // huvudmenyn: skolan syns bakom
       return;
     }
