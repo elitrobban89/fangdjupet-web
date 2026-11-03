@@ -255,7 +255,40 @@
     alert(t) { tone("square", freq(81), t, 0.08, 0.12, sfxBus); tone("square", freq(74), t + 0.09, 0.12, 0.12, sfxBus); },
     // StädHäxan skrattar: ha-ha-ha som sjunker, i en sur sågtand
     laugh(t) { [0, 1, 2, 3].forEach(i => tone("sawtooth", 520 - i * 70, t + i * 0.13, 0.11, 0.18, crusher, { from: 620 - i * 70, glide: 0.1, vibrato: 30, depth: 80 })); },
-    find(t) { [0, 4, 7, 12, 16].forEach((d, i) => tone("triangle", freq(79 + d), t + 0.07 * i, 0.12, 0.12, sfxBus)); }
+    find(t) { [0, 4, 7, 12, 16].forEach((d, i) => tone("triangle", freq(79 + d), t + 0.07 * i, 0.12, 0.12, sfxBus)); },
+    // ---- fiendernas slag: varje fiende låter på sitt eget sätt ----
+    club(t) { tone("sine", 55, t, 0.25, 0.8, sfxBus, { from: 180, glide: 0.1 }); noise(t, 0.2, 0.5, crusher, { type: "lowpass", f: 400 }); },
+    zap(t) {
+      tone("sawtooth", 2000, t, 0.2, 0.22, crusher, { from: 200, glide: 0.15, vibrato: 40, depth: 200 });
+      tone("square", 2600, t + 0.05, 0.12, 0.06, sfxBus);
+    },
+    splat(t) { noise(t, 0.25, 0.7, crusher, { type: "lowpass", f: 1500, to: 200, q: 2 }); tone("sine", 90, t, 0.15, 0.5, sfxBus, { from: 300, glide: 0.1 }); },
+    hiss(t) { noise(t, 0.45, 0.35, sfxBus, { type: "highpass", f: 4000 }); },
+    fizz(t) {
+      noise(t, 0.5, 0.3, sfxBus, { f: 5000, to: 1500, q: 6 });
+      for (let i = 0; i < 5; i++) tone("sine", 900 + i * 150, t + i * 0.07, 0.05, 0.12, sfxBus, { from: 400, glide: 0.03 });
+    },
+    blah(t) { [0, 3, -2, 1, 5, -1].forEach((d, i) => tone("square", freq(57 + d), t + i * 0.08, 0.07, 0.12, sfxBus, { vibrato: 9, depth: 40, lowpass: 1200, q: 2 })); },
+    // ---- hjältens nya saker ----
+    page(t) { noise(t, 0.12, 0.3, sfxBus, { type: "highpass", f: 3000 }); noise(t + 0.1, 0.08, 0.25, sfxBus, { f: 2000 }); },
+    slip(t) {
+      tone("square", 200, t, 0.55, 0.2, crusher, { from: 900, glide: 0.5, vibrato: 12, depth: 50 });
+      tone("sine", 50, t + 0.5, 0.2, 0.6, sfxBus, { from: 150, glide: 0.1 });
+    },
+    chime(t) { [0, 4, 7, 12, 16].forEach((d, i) => tone("triangle", freq(72 + d), t + 0.06 * i, 0.3, 0.12, sfxBus)); },
+    boing(t) { tone("sine", 300, t, 0.4, 0.4, sfxBus, { from: 120, glide: 0.08, vibrato: 14, depth: 300 }); },
+    squeak(t) {
+      tone("square", 1400, t, 0.1, 0.12, sfxBus, { from: 900, glide: 0.06 });
+      tone("square", 1500, t + 0.12, 0.1, 0.1, sfxBus, { from: 950, glide: 0.06 });
+    },
+    clang(t) {
+      tone("square", 1250, t, 0.4, 0.12, sfxBus);
+      tone("square", 1873, t, 0.35, 0.08, sfxBus, { detune: 15 });
+      noise(t, 0.05, 0.3, sfxBus, { type: "highpass", f: 6000 });
+    },
+    clank(t) { noise(t, 0.15, 0.5, crusher, { f: 900, q: 4 }); tone("triangle", 330, t, 0.2, 0.2, sfxBus); },
+    munch(t) { for (let i = 0; i < 3; i++) noise(t + i * 0.11, 0.07, 0.45, crusher, { type: "lowpass", f: 1500 }); },
+    lowhp(t) { tone("square", 988, t, 0.09, 0.1, sfxBus); tone("square", 988, t + 0.16, 0.09, 0.1, sfxBus); }
   };
 
   function sfx(name) {

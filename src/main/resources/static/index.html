@@ -72,6 +72,15 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 .ev.hl{background:rgba(255,214,90,.07);border-left:3px solid #ffd65a;padding-left:6px;margin-left:-9px;border-radius:0 5px 5px 0}
 .pending.hl{color:#ffd65a}
 @keyframes hlpulse{50%{background:rgba(255,214,90,.16)}}
+/* stressbollen kläms, boken slinter, lite hp kvar */
+.squish{animation:squish .45s ease-out}
+@keyframes squish{30%{transform:scale(1.06,.82)}60%{transform:scale(.96,1.08)}}
+.slip .tx{display:inline-block;animation:slipaway .6s ease-in}
+@keyframes slipaway{30%{transform:rotate(-4deg) translateX(-4px)}70%{transform:rotate(3deg) translateX(6px)}}
+.dmg.heal{background:rgba(116,188,150,.18);color:var(--ok)}
+.hp.low .bar{animation:lowpulse .7s ease-in-out 3}
+@keyframes lowpulse{50%{box-shadow:0 0 0 2px rgba(255,107,91,.65),0 0 14px rgba(255,107,91,.6)}}
+@media (prefers-reduced-motion: reduce){.squish,.slip .tx,.hp.low .bar{animation:none}}
 
 /* skolbyggnaden: svag bakgrundsbild bakom huvudmenyn (spelets AsciiArt.SCHOOL) */
 #bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
@@ -300,6 +309,10 @@ footer a{color:var(--dim)}
   showSound();
   soundBtn.addEventListener("click", () => { Sound.unlock(); Sound.toggle(); showSound(); Sound.music(inFight ? fightSong : roomSong); });
   let fightSong = "battle";
+  // Varje fiende låter på sitt sätt (samma som konsolspelets SoundListener.enemySound)
+  const enemySound = t => /^Enemy: Trollkarl/.test(t) ? "zap" : /^Enemy: Troll/.test(t) ? "club"
+    : /tvättsvamp/.test(t) ? "splat" : /Svinto/.test(t) ? "hiss" : /kemikalier/.test(t) ? "fizz"
+    : /^Enemy: Lektor Martin/.test(t) ? "blah" : "hurt";
   const attackSound = () => /Magi/.test(heroAttack) ? "magic" : /Avstånd/.test(heroAttack) ? "shoot"
     : /Närstrid/.test(heroAttack) ? "slash" : "smart";   // DoomScrolla, Java-boken ...
 
@@ -320,11 +333,12 @@ footer a{color:var(--dim)}
   const OPTION_ICONS = [
     [/\(låst\)/, "🔒"], [/Strid/, "⚔️"], [/Gå till/, "🚪"], [/utrustning/, "🎒"], [/Spara/, "💾"], [/Leta/, "🔍"], [/Avsluta/, "⏏️"],
     [/Starta nytt/, "✨"], [/Fortsätt/, "▶️"], [/Närstrid/, "🗡️"], [/Magi/, "🔮"], [/Avstånd/, "🏹"],
-    [/DoomScroll/i, "📱"], [/JavaQuiz/, "❓"], [/Java-boken/, "📖"], [/StackOverflow/, "📚"], [/Dela skärm/, "🖥️"],
+    [/DoomScroll/i, "📱"], [/stressboll/i, "🎾"], [/JavaQuiz/, "❓"], [/Java-boken/, "📖"], [/StackOverflow/, "📚"], [/Dela skärm/, "🖥️"],
     [/Skoldörren/, "🚪"], [/Kafferummet/, "☕"], [/Korridoren/, "🧹"], [/Lektionssalen/, "🎓"]];
 
   // ---------- kartan ----------
-  const SHORT = ROOMS.map(r => r.split(" och ")[0].normalize("NFD").replace(/\p{M}/gu, ""));   // som spelets kartnamn
+  const plain = name => name.normalize("NFD").replace(/\p{M}/gu, "");   // "Skoldörren" och "Skoldorren" är samma rum
+  const SHORT = ROOMS.map(r => plain(r.split(" och ")[0]));            // som spelets kartnamn
   const ROOM_ICONS = ["🚪", "☕", "🧹", "🎓"];
   const MARK = { "@": "📍", x: "✓", "!": "!", "?": "?", "#": "🔒" };
   const STATE_TEXT = { "@": "du är här", x: "rensat", "!": "fiender kvar", "?": "nytt rum", "#": "låst" };
@@ -332,7 +346,7 @@ footer a{color:var(--dim)}
   function drawMap(rows) {
     const state = ROOMS.map(() => "#");
     for (const r of rows) for (const m of r.matchAll(/\[(.)\] (\S+)/g)) {
-      const i = SHORT.indexOf(m[2]);
+      const i = SHORT.indexOf(plain(m[2]));
       if (i >= 0) state[i] = m[1];
     }
     showMap(state);
@@ -479,6 +493,7 @@ footer a{color:var(--dim)}
     if (name === heroName) {
       updateHud(cur, max);
       if (diff < 0) { shake(cur === 0 || -diff >= 6); flash("red"); }
+      if (diff < 0 && cur > 0 && cur * 4 <= max) { Sound.sfx("lowhp"); row.classList.add("low"); }   // varning: lite hp kvar
     }
   }
   function updateHud(cur, max) {
@@ -561,15 +576,30 @@ footer a{color:var(--dim)}
     // Striden
     if ((m = t.match(/^Hero: (.+) skada: (\d+)$/))) {
       inFight = true;
-      Sound.sfx(attackSound());
+      Sound.sfx(/ citerar /.test(t) ? "page" : /kastar stressbollen på/.test(t) ? "boing" : attackSound());
       ev("hit", "⚔️", m[1], el("span", "dmg", "−" + m[2]));
       flash("amber");
       return;
     }
+    // Dela skärm: hp i stället för skada
+    if ((m = t.match(/^Hero: (.+ delar skärmen .+): \+(\d+) hp(.*)$/))) {
+      inFight = true; Sound.sfx("chime"); flash("green");
+      const row = ev("heal", "🖥️", m[1] + m[3], el("span", "dmg heal", "+" + m[2] + " hp"));
+      restartAnim(row, "appear");
+      return;
+    }
+    if (/^Hero: .*slinter på sidan/.test(t)) { inFight = true; Sound.sfx("slip"); ev("miss slip", "📖", t.slice(6)); shake(false); return; }
     if (/^Hero: /.test(t)) { inFight = true; Sound.sfx("whoosh"); ev("miss", "💨", t.slice(6)); return; }
+    // Stressbollen kläms i början av rundan
+    if ((m = t.match(/^(.+) klämmer stressbollen: \+(\d+) hp$/))) {
+      Sound.sfx("squeak"); flash("green");
+      const row = ev("heal squeeze", "🎾", m[1] + " klämmer stressbollen", el("span", "dmg heal", "+" + m[2] + " hp"));
+      restartAnim(row, "squish");
+      return;
+    }
     if ((m = t.match(/^Enemy: (.+) skada: (\d+)$/))) {
       inFight = true; expectHero = true;
-      Sound.sfx("hurt");
+      Sound.sfx(enemySound(t));
       ev("hurt", "💥", m[1], el("span", "dmg", "−" + m[2]));
       return;
     }
@@ -591,18 +621,18 @@ footer a{color:var(--dim)}
     }
 
     // Rum
-    if (ROOMS.includes(t) || t === "Fangdjupet") {
-      roomSong = t === "Fangdjupet" ? "title" : ROOM_SONGS[ROOMS.indexOf(t)];
+    if (ROOMS.includes(t) || t === "Fangdjupet" || t === "Fångdjupet") {
+      roomSong = plain(t) === "Fangdjupet" ? "title" : ROOM_SONGS[ROOMS.indexOf(t)];
       if (!inFight) Sound.music(roomSong);
-      put(el("div", "room", (t === "Fangdjupet" ? "🏰 " : "📍 ") + t));
-      if (t === "Fangdjupet") bg.classList.add("on");   // huvudmenyn: skolan syns bakom
+      put(el("div", "room", (plain(t) === "Fangdjupet" ? "🏰 " : "📍 ") + t));
+      if (plain(t) === "Fangdjupet") bg.classList.add("on");   // huvudmenyn: skolan syns bakom
       return;
     }
     if (/^(Du står utanför|Det luktar|Korridoren känns|Du har nått fram)/.test(t)) { put(el("div", "desc", t)); return; }
 
     // Utrustning
-    if ((m = t.match(/^(Vapen|Rustning|Attack|Java-boken): (.+)$/))) {
-      const icons = { Vapen: "🗡️", Rustning: "🛡️", Attack: "🎯", "Java-boken": "📖" };
+    if ((m = t.match(/^(Vapen|Rustning|Attack|Java-boken|Stressboll): (.+)$/))) {
+      const icons = { Vapen: "🗡️", Rustning: "🛡️", Attack: "🎯", "Java-boken": "📖", Stressboll: "🎾" };
       ev("eq info", icons[m[1]], el("span", "k", m[1]), m[2]);
       return;
     }
@@ -635,6 +665,8 @@ footer a{color:var(--dim)}
       [/\(\+\d+ hp\)/, "heal", "☕"],
       [/^Du tar på dig/, "loot", "🛡️"],
       [/^Du har nu .* i handen/, "loot", "🗡️"],
+      [/^Du stoppar Stressboll/, "loot", "🎾"],
+      [/^Du kan också kasta den/, "info", "🎾"],
       [/^Du byter till/, "loot", "🎯"],
       [/^Du hittar en Java-bok/, "loot", "📖"],
       [/^Du hittar inget/, "warn", "🤷"],
@@ -653,9 +685,12 @@ footer a{color:var(--dim)}
     const rule = RULES.find(([re]) => re.test(t));
     if (rule) {
       const row = ev(rule[1] + (isYellow ? " hl" : ""), rule[2], t);
-      if (rule[1] === "heal") { flash("green"); Sound.sfx("gulp"); }
+      if (rule[1] === "heal") { flash("green"); Sound.sfx(/kanelbulle/.test(t) ? "munch" : "gulp"); }
       else if (rule[2] === "🎁" || rule[2] === "📖") Sound.sfx("find");
       else if (rule[1] === "loot" && rule[2] === "✋") Sound.sfx("pickup");
+      else if (rule[2] === "🗡️") Sound.sfx("clang");
+      else if (rule[2] === "🛡️") Sound.sfx("clank");
+      else if (rule[2] === "🎾" && rule[1] === "loot") Sound.sfx("squeak");
       if (rule[2] === "🔒") {                 // dörren slår igen: skaka, och Skoldörren låst i kartan direkt
         shake(true); flash("red"); Sound.sfx("slam");
         if (mapState.length) showMap(mapState.map((s, i) => i === 0 ? "#" : s));
