@@ -210,6 +210,18 @@ button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
 .pending input:focus{background:rgba(159,195,238,.06);border-radius:3px}
 .pending.hl input{color:#ffe08a}
 @media (pointer:coarse){.pending input{font-size:16px}}   /* iPhone zoomar inte in */
+
+/* frågan ("Välj ett alternativ:") i guld: ett ljussken glider över texten, en pil som knuffar och ett svagt sken */
+.pending .prompt{font-weight:700;letter-spacing:.02em;
+  background:linear-gradient(100deg,#a8741f 0%,#e9b25e 16%,#ffe9a8 25%,#ffffff 31%,#ffe9a8 37%,#e9b25e 46%,#a8741f 62%,#e9b25e 80%,#a8741f 100%);
+  background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:goldShine 2.8s linear infinite,goldGlow 2.8s ease-in-out infinite}
+.pending .prompt::before{content:"➤";display:inline-block;margin-right:.55em;
+  -webkit-background-clip:text;background-clip:text;animation:nudge 1.4s ease-in-out infinite}
+@keyframes goldShine{from{background-position:100% 0}to{background-position:-160% 0}}
+@keyframes goldGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(233,178,94,.25))}50%{filter:drop-shadow(0 0 10px rgba(255,214,120,.8))}}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+.pending input{caret-color:#ffd76a}
 footer{padding:8px 16px 10px;font-size:12px;color:var(--dim);display:flex;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line)}
 footer a{color:var(--dim)}
 @media (max-width:560px){#hud{padding:6px 12px;gap:8px}#map{flex-basis:100%}#map .node{padding:4px 6px}#map .node:not([data-s="@"]) .nm{display:none}#hud .hero{margin-left:0}#screen{padding:12px 12px 16px}}
@@ -651,7 +663,8 @@ footer a{color:var(--dim)}
     if (pendingEl) pendingEl.remove();
     pendingEl = null;
     if (!partial) return;
-    pendingEl = el("div", "ln pending" + (partialYellow ? " hl" : ""), partial);
+    pendingEl = el("div", "ln pending" + (partialYellow ? " hl" : ""));
+    pendingEl.append(el("span", "prompt", partial.trimEnd()), " ");   // frågan i rörlig guldtext
     if (!session) {
       pendingEl.append(el("span", "cursor"));
       screen.appendChild(pendingEl);
