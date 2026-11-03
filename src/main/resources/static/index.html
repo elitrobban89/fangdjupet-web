@@ -29,6 +29,7 @@ header p{margin:0;font-size:13px;color:var(--dim);flex:1;min-width:180px}
 button{font:inherit;cursor:pointer;border-radius:6px}
 .ghost{background:transparent;color:var(--ink);border:1px solid var(--line);padding:6px 12px;font-size:13px}
 .ghost:hover{border-color:var(--dim)}
+#sound[aria-pressed="false"]{color:var(--dim)}
 .primary{background:var(--accent);color:var(--accent-ink);border:0;padding:12px 22px;font-weight:700;font-size:15px}
 .primary:hover{filter:brightness(1.08)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--you);outline-offset:2px}
@@ -233,6 +234,7 @@ footer a{color:var(--dim)}
   <h1><img src="/icon.svg" alt="">FÅNGDJUPET</h1>
   <span class="tag">MITT PROJEKT</span>
   <p>Ett textbaserat rollspel i Java – det riktiga spelet körs på servern.</p>
+  <button type="button" class="ghost" id="sound" aria-pressed="true" title="Musik och ljud på/av">🔊 Ljud</button>
   <button type="button" class="ghost" id="restart" hidden>Starta om</button>
 </header>
 
@@ -260,6 +262,7 @@ footer a{color:var(--dim)}
   <span>Sparningen finns kvar ett dygn på den här enheten.</span>
 </footer>
 
+<script src="/sound.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -287,6 +290,18 @@ footer a{color:var(--dim)}
   let nextArt = "";               // vad nästa bild är: "atk" (hjälten valde) eller "foe" (bossen)
   let heroName = null, expectHero = false, inFight = false;
   const hpSeen = new Map();       // namn → senaste hp, för att se skada/läkning
+
+  // ---------- ljud (sound.js): musik per rum, stridsmusik, och fula 8-bitarsljud ----------
+  const ROOM_SONGS = ["door", "coffee", "sticky", "lecture"];   // Skoldörren, Kafferummet, städskrubben (klibbig), Lektionssalen
+  let roomSong = "title";         // låten för rummet man är i
+  let heroAttack = "Närstrid";    // attacken hjälten har: avgör ljudet när hen slår (magi och avstånd skriver båda "skjuter")
+  const soundBtn = $("sound");
+  const showSound = () => { soundBtn.setAttribute("aria-pressed", String(Sound.on)); soundBtn.textContent = Sound.on ? "🔊 Ljud" : "🔇 Ljud"; };
+  showSound();
+  soundBtn.addEventListener("click", () => { Sound.unlock(); Sound.toggle(); showSound(); Sound.music(inFight ? fightSong : roomSong); });
+  let fightSong = "battle";
+  const attackSound = () => /Magi/.test(heroAttack) ? "magic" : /Avstånd/.test(heroAttack) ? "shoot"
+    : /Närstrid/.test(heroAttack) ? "slash" : "smart";   // DoomScrolla, Java-boken ...
 
   const ROOMS = ["Skoldörren", "Kafferummet", "Korridoren och städskrubben", "Lektionssalen"];
 
@@ -546,23 +561,28 @@ footer a{color:var(--dim)}
     // Striden
     if ((m = t.match(/^Hero: (.+) skada: (\d+)$/))) {
       inFight = true;
+      Sound.sfx(attackSound());
       ev("hit", "⚔️", m[1], el("span", "dmg", "−" + m[2]));
       flash("amber");
       return;
     }
-    if (/^Hero: /.test(t)) { inFight = true; ev("miss", "💨", t.slice(6)); return; }
+    if (/^Hero: /.test(t)) { inFight = true; Sound.sfx("whoosh"); ev("miss", "💨", t.slice(6)); return; }
     if ((m = t.match(/^Enemy: (.+) skada: (\d+)$/))) {
       inFight = true; expectHero = true;
+      Sound.sfx("hurt");
       ev("hurt", "💥", m[1], el("span", "dmg", "−" + m[2]));
       return;
     }
-    if (/^Enemy: /.test(t)) { inFight = true; expectHero = true; ev("dodge", "🛡️", t.slice(7)); return; }
-    if (/ vinner Fångdjupet!$/.test(t)) { inFight = false; ev("win big", "👑", t); return; }
-    if (/ vinner mot .*!$/.test(t)) { inFight = false; ev("win", "🏆", t); return; }
-    if ((m = t.match(/^Fiende (.+) dyker upp!$/))) { ev("appear", "👹", t); return; }
-    if (/^Men vänta\.\.\./.test(t)) { ev("appear", "❗", t); shake(false); return; }
-    if (/blir arg!|skrattar elakt/.test(t)) { ev("danger", /skrattar/.test(t) ? "😈" : "😡", t); shake(true); flash("red"); return; }
-    if (/besegrades av|dog av sin egen attack/.test(t)) { inFight = false; ev("danger", "☠️", t); return; }
+    if (/^Enemy: /.test(t)) { inFight = true; expectHero = true; Sound.sfx("whoosh"); ev("dodge", "🛡️", t.slice(7)); return; }
+    if (/ vinner Fångdjupet!$/.test(t)) { inFight = false; roomSong = "title"; Sound.jingle("final", "title"); ev("win big", "👑", t); return; }
+    if (/ vinner mot .*!$/.test(t)) { inFight = false; Sound.jingle("win", roomSong); ev("win", "🏆", t); return; }
+    if ((m = t.match(/^Fiende (.+) dyker upp!$/))) {
+      // stridsmusik: Martin har sin egen, och StädHäxan slåss till en snabbare klibbig låt
+      fightSong = /Martin/.test(m[1]) ? "boss" : roomSong === "sticky" ? "stickyFight" : "battle";
+      Sound.sfx("alert"); Sound.music(fightSong); ev("appear", "👹", t); return; }
+    if (/^Men vänta\.\.\./.test(t)) { Sound.sfx("alert"); ev("appear", "❗", t); shake(false); return; }
+    if (/blir arg!|skrattar elakt/.test(t)) { Sound.sfx(/skrattar/.test(t) ? "laugh" : "alert"); ev("danger", /skrattar/.test(t) ? "😈" : "😡", t); shake(true); flash("red"); return; }
+    if (/besegrades av|dog av sin egen attack/.test(t)) { inFight = false; roomSong = "title"; Sound.jingle("lose", null); ev("danger", "☠️", t); return; }
 
     // Repliker: Trollkarl: "Thou shall not pass!"
     if ((m = t.match(/^([^:"]{1,30}): "(.*)"$/))) {
@@ -572,6 +592,8 @@ footer a{color:var(--dim)}
 
     // Rum
     if (ROOMS.includes(t) || t === "Fangdjupet") {
+      roomSong = t === "Fangdjupet" ? "title" : ROOM_SONGS[ROOMS.indexOf(t)];
+      if (!inFight) Sound.music(roomSong);
       put(el("div", "room", (t === "Fangdjupet" ? "🏰 " : "📍 ") + t));
       if (t === "Fangdjupet") bg.classList.add("on");   // huvudmenyn: skolan syns bakom
       return;
@@ -586,6 +608,8 @@ footer a{color:var(--dim)}
     }
 
     if ((m = t.match(/^Välkommen tillbaka, (.+)!$/))) heroName = m[1];
+    if ((m = t.match(/^Du byter till (.+).$/))) heroAttack = m[1];
+    if (/^(Äventyret börjar|Välkommen tillbaka)/.test(t)) heroAttack = "Närstrid";
 
     // "Du går till Kafferummet." – flytta 📍 i kartan direkt, inte först när menyn kommer
     if ((m = t.match(/^Du går till (.+).$/)) && mapState.length && ROOMS.includes(m[1])) {
@@ -629,9 +653,11 @@ footer a{color:var(--dim)}
     const rule = RULES.find(([re]) => re.test(t));
     if (rule) {
       const row = ev(rule[1] + (isYellow ? " hl" : ""), rule[2], t);
-      if (rule[1] === "heal") flash("green");
+      if (rule[1] === "heal") { flash("green"); Sound.sfx("gulp"); }
+      else if (rule[2] === "🎁" || rule[2] === "📖") Sound.sfx("find");
+      else if (rule[1] === "loot" && rule[2] === "✋") Sound.sfx("pickup");
       if (rule[2] === "🔒") {                 // dörren slår igen: skaka, och Skoldörren låst i kartan direkt
-        shake(true); flash("red");
+        shake(true); flash("red"); Sound.sfx("slam");
         if (mapState.length) showMap(mapState.map((s, i) => i === 0 ? "#" : s));
       }
       if (rule[1].startsWith("loot")) restartAnim(row, "appear");
@@ -773,7 +799,7 @@ footer a{color:var(--dim)}
       const icon = !label ? "›" : value === "" ? (stay ? "🧍" : "↩️") : iconFor(label);
       row.append(el("span", "ic", icon), el("span", null, label || value || "(Enter)"));
       document.querySelectorAll(".menu:not(.done)").forEach(b => b.classList.add("done"));
-      if (attackMenu && value !== "") nextArt = "atk";
+      if (attackMenu && value !== "") { nextArt = "atk"; if (label) heroAttack = label; }
     } else {
       row.append(el("span", "p", prompt.trim()), el("span", null, value));
       if (/heter hjälten/.test(prompt)) heroName = value.trim() || "Hjälten";   // samma regel som spelet
@@ -828,6 +854,7 @@ footer a{color:var(--dim)}
   }
 
   async function startGame() {
+    Sound.unlock();               // webbläsaren släpper fram ljudet först efter ett klick
     play.disabled = true;
     coverMsg.hidden = false;
     coverMsg.textContent = "Startar …";
@@ -873,6 +900,7 @@ footer a{color:var(--dim)}
     restart.hidden = true;
     if (pendingEl) { pendingEl.remove(); pendingEl = null; }
     sysLine(message);
+    Sound.music(null);
     showCover(message + " Ditt sparade äventyr finns kvar – välj 2 i huvudmenyn för att fortsätta.", "Spela igen");
   }
 
@@ -885,6 +913,7 @@ footer a{color:var(--dim)}
 
   async function submit(value) {
     if (!session) return;
+    Sound.sfx("blip");
     answered(value);
     try {
       const { status } = await api("/api/input?session=" + encodeURIComponent(session), {
@@ -900,7 +929,9 @@ footer a{color:var(--dim)}
   restart.addEventListener("click", startGame);
   screen.addEventListener("click", e => { if (!e.target.closest("button")) focusAnswer(); });
   // Börjar man skriva någon annanstans (t.ex. efter ett klick i kartan) hamnar tecknen på svarsraden
+  document.addEventListener("pointerdown", () => Sound.unlock(), { once: true });
   document.addEventListener("keydown", e => {
+    Sound.unlock();
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement?.tagName !== "INPUT") focusAnswer();
   });
   mainEl.addEventListener("animationend", e => { if (e.target === mainEl) mainEl.classList.remove("shake", "hard"); });

@@ -18,6 +18,7 @@ kopplar processens `System.in` och `System.out` till en terminal på webbsidan.
 - **Spara och fortsätt fungerar**: webbläsaren får ett slumpat spelar-id (i `localStorage`), och spelet körs i en
   mapp per id. Sparningen finns kvar ett dygn, eller tills servern startas om.
 - **Snabbval**: menyraderna (`1. Strid mot rummets fiende` …) blir knappar, bra på mobilen.
+- **Musik och ljud** (`sound.js`, Web Audio – inga ljudfiler): egna retrolåtar i japansk RPG-stil i pentatoniska skalor, en för varje rum – huvudmenyn (yo), Skoldörren, Kafferummet (ryūkyū), en **klibbig** låt i städskrubben (iwato: tonerna glider in i varandra, svajar och är ostämda, med ett "plopp" som en mopp i hinken) och Lektionssalen (in-skalan). I strid byts låten: stridsmusik, en snabbare klibbig låt mot StädHäxan och egen bossmusik mot Lektor Martin. Jinglar vid vinst, game over och när Fångdjupet är vunnet. Medvetet fula 8-bitarsljud: knapptryck, ett krossat "PJOOO" när pilbågen skjuter, magi, svärdshugg, miss, skada, kaffe (glugg), föremål, dörren som slår igen och StädHäxans skratt. Knappen 🔊 Ljud stänger av (sparas i webbläsaren). Spelet på servern startas med `-Dfangdjupet.ljud=av`.
 - **GAME OVER i rött**: spelets ANSI-färgkoder blir färg på sidan.
 - **Skydd**: högst `MAX_SESSIONS` spel samtidigt, inaktiva spel stängs efter 10 min och alla efter 60 min,
   en rad är högst 200 tecken utan styrtecken, spelet körs som en vanlig användare (inte root) och sidan får
@@ -31,6 +32,7 @@ kopplar processens `System.in` och `System.out` till en terminal på webbsidan.
 | `src/main/java/se/elitrobban/fangdjupet/GameSession.java` | Ett spel: processen, utskriftsbufferten och inmatningen |
 | `src/main/java/se/elitrobban/fangdjupet/Config.java` | Inställningar från miljövariabler |
 | `src/main/resources/static/index.html` | Terminalen i webbläsaren: läser spelets rader och ritar dem med ikoner, hp-staplar, en HUD med en klickbar karta över rummen (spelets `KARTA`-rader) och hjältens hp, menyvalen i terminalen går att klicka på (ingen extra knapprad), svaret skrivs direkt på spelets svarsrad och skickas med Enter (ingen separat inmatningsruta), frågan ("Välj ett alternativ:") i rörlig guldtext med en knuffande pil, skolbyggnaden (`AsciiArt.SCHOOL`) som svag bakgrundsbild bara bakom huvudmenyn, skakning och röd blixt när Entrédörren slår igen och Skoldörren låses på kartan, j/n-knappar direkt på frågeraden ("Ja, ta den" för kaffet och kanelbullen), 😈 när StädHäxan skrattar elakt, gulmarkerade val, menyer som fälls ihop när man valt, attackbilder som sveper in, skakande skärm och röd blixt när hjälten tar skada, konfetti vid vinst. `prefers-reduced-motion` stänger av rörelserna. |
+| `src/main/resources/static/sound.js` | Musiken och ljudeffekterna, syntade i webbläsaren |
 | `src/main/resources/static/icon.svg` | Ikonen (favicon) |
 | `src/main/resources/static/card.svg` | Projektkort 1200×630 ("Mitt projekt") |
 | `wordpress/projektkort.html` | Kortet till projektrutnätet på elitrobban.se |

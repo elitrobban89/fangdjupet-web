@@ -43,6 +43,7 @@ final class GameSession {
                 config.javaBin(),
                 "-XX:+UseSerialGC", "-Xmx32m", "-Xss512k", "-XX:TieredStopAtLevel=1",   // liten JVM
                 "-Dstdout.encoding=UTF-8", "-Dstdin.encoding=UTF-8", "-Dfile.encoding=UTF-8",  // å, ä och ö
+                "-Dfangdjupet.ljud=av",   // servern spelar inget ljud: webbläsaren har egen musik (sound.js)
                 "-cp", config.gameClasspath(),
                 "se.fangdjupet.Main");
 
