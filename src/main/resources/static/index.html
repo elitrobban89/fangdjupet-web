@@ -126,16 +126,22 @@ footer a{color:var(--dim)}
   })();
 
   // ---- utskrift ----
-  const nearBottom = () => screen.scrollHeight - screen.scrollTop - screen.clientHeight < 60;
+  // Senaste händelsen ska alltid synas: scrolla till botten nu och efter nästa omritning
+  // (snabbvalsknapparna dyker upp under terminalen och gör den lägre).
+  function scrollToEnd() {
+    screen.scrollTop = screen.scrollHeight;
+    requestAnimationFrame(() => { screen.scrollTop = screen.scrollHeight; });
+  }
+  // Ändras terminalens storlek (knapparna, mobilens tangentbord, fönstret) – stanna på botten
+  if ("ResizeObserver" in window) new ResizeObserver(scrollToEnd).observe(screen);
 
   function append(text, cls) {
-    const stick = nearBottom();
     const span = document.createElement("span");
     if (cls) span.className = cls;
     span.textContent = text;
     screen.appendChild(span);
     while (screen.textContent.length > 300000 && screen.firstChild) screen.removeChild(screen.firstChild);
-    if (stick) screen.scrollTop = screen.scrollHeight;
+    scrollToEnd();
   }
 
   // Spelets GAME OVER är röd med ANSI-koder (\x1b[31m … \x1b[0m) – de blir färg här
@@ -159,6 +165,7 @@ footer a{color:var(--dim)}
     }
     sinceInput += text.replace(/\x1b\[[0-9;]*m/g, "");
     updateChips();
+    scrollToEnd();
   }
 
   // ---- snabbval: menyraderna "1. Strid mot …" blir knappar ----
@@ -286,6 +293,7 @@ footer a{color:var(--dim)}
     append(value + "\n", "you");
     sinceInput = "";
     chips.textContent = "";
+    scrollToEnd();
     line.value = "";
     line.focus({ preventScroll: true });
     try {
