@@ -289,7 +289,14 @@ button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
 @keyframes ambDown{from{transform:translateY(0) rotate(0);opacity:0}15%{opacity:.25}85%{opacity:.25}to{transform:translateY(95vh) translateX(60px) rotate(260deg);opacity:0}}
 #main.danger::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;box-shadow:inset 0 0 90px rgba(255,40,30,.55);animation:heartbeat 1.1s ease-in-out infinite}
 @keyframes heartbeat{0%,100%{opacity:.25}12%{opacity:.9}24%{opacity:.35}36%{opacity:.75}}
-@media (prefers-reduced-motion: reduce){button.opt,.opt.hl,#main.gameover,#main.danger::after{animation:none}}
+/* USB-minnet: viruset tar över skärmen */
+#main.glitch{animation:glitch .9s steps(2) 1}
+@keyframes glitch{0%,100%{filter:none;transform:none}10%{filter:hue-rotate(90deg) saturate(3);transform:translate(-4px,1px)}25%{filter:invert(1);transform:translate(5px,-2px)}40%{filter:hue-rotate(-120deg);transform:translate(-3px,2px)}60%{filter:contrast(2) saturate(4);transform:translate(2px,0)}80%{filter:hue-rotate(60deg);transform:none}}
+#fx .bug{bottom:-10%;font-size:34px;animation:bugUp 1.6s ease-out both}
+@keyframes bugUp{0%{transform:translateY(0) rotate(0);opacity:0}15%{opacity:1}100%{transform:translateY(-95vh) rotate(var(--r));opacity:0}}
+#fx .usb{left:-12%;top:46%;font:900 26px/1 ui-monospace,Consolas,monospace;color:#74bc96;text-shadow:0 0 12px rgba(116,188,150,.8);animation:usbIn .7s ease-in forwards}
+@keyframes usbIn{to{left:46%}}
+@media (prefers-reduced-motion: reduce){button.opt,.opt.hl,#main.gameover,#main.danger::after,#main.glitch{animation:none}}
 .shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
 .shake.hard{animation:shake .6s cubic-bezier(.36,.07,.19,.97)}
 
@@ -662,6 +669,27 @@ footer a{color:var(--dim)}
       a.style[falls ? "top" : "bottom"] = "-4%";
     }, 1500);
   }
+  // USB-minnet: lyckas det tar viruset över skärmen, annars blir man påkommen
+  function usbFx(success) {
+    if (!calm.matches) sprite("[USB]>", "usb", 800);
+    setTimeout(() => {
+      if (success) {
+        if (!calm.matches) {
+          restartAnim(mainEl, "glitch");
+          for (let i = 0; i < 14; i++) {
+            const b = sprite("🦠", "bug", 1700);
+            b.style.left = 4 + Math.random() * 90 + "%";
+            b.style.setProperty("--r", (Math.random() * 720 - 360) + "deg");
+            b.style.animationDelay = i * 50 + "ms";
+          }
+        }
+        titleCard("VIRUS! DATORN ÄR ÖVERTAGEN", "boss"); flash("green");
+      } else {
+        if (!calm.matches) sprite("PÅKOMMEN!", "missword", 1000);
+        shake(true); flash("red");
+      }
+    }, 650);
+  }
   function danger(on) { mainEl.classList.toggle("danger", on && !calm.matches); }
   // Effekter för vanliga rader (utöver ikonen och ljudet), anropas för varje textrad
   function lineFx(t) {
@@ -873,6 +901,13 @@ footer a{color:var(--dim)}
     }
 
     // Striden
+    // USB-minnet: lyckas det vinner hjälten direkt, annars blir hen påkommen och Martin tar det
+    if ((m = t.match(/^Hero: (.+ smyger in ett USB-minne .+) skada: (\d+)$/))) {
+      inFight = true; Sound.sfx("zap"); usbFx(true);
+      ev("hit", "🦠", m[1], el("span", "dmg", "−" + m[2]));
+      return;
+    }
+    if (/^Hero: .*blir påkommen av/.test(t)) { inFight = true; Sound.sfx("buzz"); usbFx(false); ev("danger", "🚨", t.slice(6)); return; }
     if ((m = t.match(/^Hero: (.+) skada: (\d+)$/))) {
       inFight = true;
       const kind = / citerar /.test(t) ? "page" : /kastar stressbollen på/.test(t) ? "boing" : attackSound();
