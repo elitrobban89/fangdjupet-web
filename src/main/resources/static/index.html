@@ -907,6 +907,7 @@ footer a{color:var(--dim)}
     if (/ vinner Fångdjupet!$/.test(t)) { inFight = false; roomSong = "title"; Sound.jingle("final", "title"); ev("win big", "👑", t); return; }
     if (/ vinner mot .*!$/.test(t)) { inFight = false; Sound.jingle("win", roomSong); starBurst(); ev("win", "🏆", t); return; }
     if ((m = t.match(/^Fiende (.+) dyker upp!$/))) {
+      inFight = true;   // striden börjar här: alla mätare från nu går till stridspanelen, även stressbollen i första rundan
       // stridsmusik: Martin har sin egen, och StädHäxan slåss till en snabbare klibbig låt
       fightSong = /Martin/.test(m[1]) ? "boss" : roomSong === "sticky" ? "stickyFight" : "battle";
       Sound.sfx("alert"); Sound.music(fightSong);
