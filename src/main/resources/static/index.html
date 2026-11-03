@@ -616,6 +616,7 @@ footer a{color:var(--dim)}
 
     // Repliker: Trollkarl: "Thou shall not pass!"
     if ((m = t.match(/^([^:"]{1,30}): "(.*)"$/))) {
+      Sound.sfx(/^Lektor Martin/.test(m[1]) ? "blah" : "talk");
       ev("say", "💬", el("span", "who", m[1] + " "), el("span", "q", "“" + m[2] + "”"));
       return;
     }
@@ -682,6 +683,11 @@ footer a{color:var(--dim)}
       [/^Välj 1 för att börja om/, "info", "🔁"],
       [/dricker|tar en/, "heal", "☕"],
       [/kaffe|kanelbulle|Kannan/, "info", "☕"]];
+    const OTHER_SOUNDS = [
+      [/^Du går till/, "steps"], [/^Du letar/, "rummage"], [/^Du hittar inget/, "nope"], [/^Äventyret är sparat/, "save"],
+      [/^(Ogiltigt val|Starta ett äventyr först|Det finns ingen|Det finns inget|Kunde inte|Sparfilen|Du är redan i)/, "buzz"],
+      [/^Frida dyker upp/, "sparkle"], [/^(Äventyret börjar!|Välkommen tillbaka)/, "fanfare"], [/^Du byter till/, "swap"],
+      [/står i vägen/, "locked"], [/^Du låter /, "drop"], [/^Visa hjältens utrustning/, "bag"], [/^Tack för att du spelade/, "bye"]];
     const rule = RULES.find(([re]) => re.test(t));
     if (rule) {
       const row = ev(rule[1] + (isYellow ? " hl" : ""), rule[2], t);
@@ -691,13 +697,20 @@ footer a{color:var(--dim)}
       else if (rule[2] === "🗡️") Sound.sfx("clang");
       else if (rule[2] === "🛡️") Sound.sfx("clank");
       else if (rule[2] === "🎾" && rule[1] === "loot") Sound.sfx("squeak");
-      if (rule[2] === "🔒") {                 // dörren slår igen: skaka, och Skoldörren låst i kartan direkt
+      else {                                  // gå, leta, spara, fel val, Frida ... (som SoundListener.otherSound)
+        const other = OTHER_SOUNDS.find(([re]) => re.test(t));
+        if (other) Sound.sfx(other[1]);
+      }
+      if (rule[2] === "🔒" && !/inlåst/.test(t)) Sound.sfx("locked");   // ett låst rum: handtaget skramlar
+      else if (rule[2] === "🔒") {           // dörren slår igen: skaka, och Skoldörren låst i kartan direkt
         shake(true); flash("red"); Sound.sfx("slam");
         if (mapState.length) showMap(mapState.map((s, i) => i === 0 ? "#" : s));
       }
       if (rule[1].startsWith("loot")) restartAnim(row, "appear");
       return;
     }
+    const other = OTHER_SOUNDS.find(([re]) => re.test(t));
+    if (other) Sound.sfx(other[1]);
     ev("info" + (isYellow ? " hl" : ""), isYellow ? "✨" : "", t);
   }
 

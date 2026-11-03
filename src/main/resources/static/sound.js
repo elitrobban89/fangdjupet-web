@@ -288,7 +288,32 @@
     },
     clank(t) { noise(t, 0.15, 0.5, crusher, { f: 900, q: 4 }); tone("triangle", 330, t, 0.2, 0.2, sfxBus); },
     munch(t) { for (let i = 0; i < 3; i++) noise(t + i * 0.11, 0.07, 0.45, crusher, { type: "lowpass", f: 1500 }); },
-    lowhp(t) { tone("square", 988, t, 0.09, 0.1, sfxBus); tone("square", 988, t + 0.16, 0.09, 0.1, sfxBus); }
+    lowhp(t) { tone("square", 988, t, 0.09, 0.1, sfxBus); tone("square", 988, t + 0.16, 0.09, 0.1, sfxBus); },
+    // ---- utanför striden: gå, leta, spara, prata (samma som konsolspelets RetroSpeaker) ----
+    steps(t) { for (let i = 0; i < 4; i++) { noise(t + i * 0.16, 0.05, 0.4, crusher, { type: "lowpass", f: 700, q: 2 }); tone("sine", 70, t + i * 0.16, 0.06, 0.3, sfxBus, { from: 140, glide: 0.03 }); } },
+    rummage(t) { for (let i = 0; i < 6; i++) noise(t + i * 0.07, 0.05, 0.25, sfxBus, { f: 1800 + (i % 3) * 900, q: 3 }); },
+    nope(t) {
+      tone("square", 220, t, 0.16, 0.14, sfxBus, { lowpass: 1500 });
+      tone("square", 165, t + 0.18, 0.3, 0.14, sfxBus, { from: 185, glide: 0.2, lowpass: 1200 });
+    },
+    save(t) {
+      tone("square", 1760, t, 0.05, 0.1, sfxBus); tone("square", 1760, t + 0.08, 0.05, 0.1, sfxBus);
+      tone("triangle", freq(84), t + 0.18, 0.25, 0.14, sfxBus);
+      noise(t + 0.02, 0.15, 0.08, sfxBus, { type: "highpass", f: 5000 });
+    },
+    buzz(t) { tone("square", 110, t, 0.22, 0.16, crusher, { detune: 30 }); },
+    sparkle(t) { for (let i = 0; i < 7; i++) tone("triangle", freq(84 + (i * 5) % 12 + Math.floor(i / 3) * 12), t + i * 0.05, 0.12, 0.08, sfxBus); },
+    fanfare(t) {
+      const up = [0, 0, 0, 5], len = [0.1, 0.1, 0.1, 0.45];
+      let at = t;
+      up.forEach((d, i) => { tone("square", freq(67 + d), at, len[i], 0.12, sfxBus); tone("triangle", freq(55 + d), at, len[i], 0.14, sfxBus); at += len[i] + 0.03; });
+    },
+    swap(t) { tone("square", 900, t, 0.03, 0.1, sfxBus); tone("square", 1350, t + 0.07, 0.03, 0.1, sfxBus); },
+    locked(t) { for (let i = 0; i < 3; i++) noise(t + i * 0.09, 0.06, 0.35, crusher, { f: 1200, q: 6 }); tone("sine", 90, t + 0.3, 0.12, 0.3, sfxBus); },
+    talk(t) { [0, 4, 2, 5].forEach((d, i) => tone("square", freq(69 + d), t + i * 0.07, 0.05, 0.08, sfxBus, { lowpass: 2500 })); },
+    bag(t) { noise(t, 0.25, 0.25, sfxBus, { f: 1500, to: 5000, q: 4 }); tone("square", 400, t, 0.25, 0.04, sfxBus, { from: 200, glide: 0.25 }); },
+    drop(t) { tone("sine", 80, t, 0.18, 0.4, sfxBus, { from: 260, glide: 0.12 }); },
+    bye(t) { [12, 7, 0].forEach((d, i) => tone("triangle", freq(72 + d), t + i * 0.16, 0.2, 0.14, sfxBus)); }
   };
 
   function sfx(name) {
