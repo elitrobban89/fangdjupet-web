@@ -1,32 +1,352 @@
-<!-- Fångdjupet – projektkort till rutnätet på elitrobban.se.
-     Klistra in bland de andra <a class="pj-card"> i samma Custom HTML-block (stilen .pj-* finns redan där).
-     Ikonen är inline-SVG i stället för en emoji, så den syns även när spelservern på Render sover. -->
-<a class="pj-card" href="https://elitrobban.se/fangdjupet-java-cli-spel/">
-  <div class="pj-icon">
-    <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="4 4 56 56" aria-hidden="true">
-      <defs>
-        <linearGradient id="fd-sten" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#f6cd82"/>
-          <stop offset="1" stop-color="#c47a22"/>
-        </linearGradient>
-      </defs>
-      <path d="M16.5 56V36a15.5 15.5 0 0 1 31 0v20z" fill="#e9b25e" fill-opacity="0.16"/>
-      <path d="M24 16.5c-3.2-3 3.2-5.2 0-9M32 15.5c-3.2-3 3.2-5.2 0-9M40 16.5c-3.2-3 3.2-5.2 0-9"
-            fill="none" stroke="#a5c8f0" stroke-width="2.8" stroke-linecap="round"/>
-      <g stroke="#c3cbd6" stroke-width="2.4" stroke-linecap="round">
-        <path d="M24 25v31M32 22v34M40 25v31"/>
-        <path d="M18 38h28M18 47h28"/>
-      </g>
-      <path d="M14 56V36a18 18 0 0 1 36 0v20" fill="none" stroke="url(#fd-sten)" stroke-width="5.5" stroke-linejoin="round"/>
-      <path d="M9 56.5h46" stroke="url(#fd-sten)" stroke-width="4.5" stroke-linecap="round"/>
-    </svg>
-  </div>
-  <div class="pj-body">
-    <div class="pj-label">Mitt projekt</div>
-    <div class="pj-title">Fångdjupet</div>
-    <div class="pj-desc">Textbaserat rollspel i Java – slåss dig igenom skolan mot Kapten Martin, direkt i webbläsaren. Grupparbete med Strategy, Factory och Observer.</div>
-  </div>
-  <div class="pj-arrow">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
-  </div>
-</a>
+<!-- CarAdvice — (c) 2026 Robert Andersson Kopler. Alla rattigheter forbehallna. -->
+<!-- Projektkorten i footern – 8 kort i tvåkolumnsgrid + Fångdjupet som utvalt kort över hela bredden.
+     Uppdaterad 2026-11-03: Fångdjupet tillagt (.pj-feature), Bankomat-kortets saknade </a> rättad,
+     mjukt bindestreck (&shy;) i bränslekostnadstiteln så den bryter snyggt på smal skärm. Behöver klistras in i WP. -->
+<style>
+  .pj-wrap {
+    max-width: 1100px;
+    margin: 40px auto 16px;
+    padding: 0 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 580px) {
+    .pj-wrap { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 700px) {
+    .is-layout-flex:has(.pj-wrap) {
+      flex-direction: column !important;
+      flex-wrap: wrap !important;
+      align-items: stretch !important;
+    }
+    .pj-wrap {
+      margin: 20px 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+  }
+
+  .pj-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 36px 32px;
+    background: linear-gradient(135deg, #1e2a4a 0%, #2d1f5e 50%, #1a2a4a 100%);
+    box-shadow: 0 8px 40px rgba(99,102,241,0.25), 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    text-decoration: none;
+    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s;
+    cursor: pointer;
+  }
+  .pj-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 56px rgba(99,102,241,0.38), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .pj-card::before {
+    content: '';
+    position: absolute;
+    top: -40%; right: -10%;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .pj-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30%; left: 20%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .pj-icon {
+    flex-shrink: 0;
+    width: 64px; height: 64px;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s;
+  }
+  .pj-card:hover .pj-icon { transform: scale(1.1) rotate(-5deg); }
+
+  .pj-body { flex: 1; min-width: 0; }
+  .pj-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(165,180,252,0.9);
+    margin-bottom: 6px;
+  }
+  .pj-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .pj-desc {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+  }
+
+  .pj-arrow {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.3s;
+  }
+  .pj-card:hover .pj-arrow {
+    background: rgba(255,255,255,0.22);
+    transform: translateX(4px);
+  }
+
+  /* ---- Fångdjupet: utvalt kort över hela bredden ---- */
+  .pj-feature {
+    grid-column: 1 / -1;
+    padding: 34px 32px;
+    background: linear-gradient(120deg, #161a2b 0%, #2a1f4e 45%, #3b2716 100%);
+    box-shadow: 0 8px 40px rgba(233,178,94,0.22), 0 2px 8px rgba(0,0,0,0.18);
+    border: 1px solid rgba(233,178,94,0.28);
+  }
+  .pj-feature:hover {
+    box-shadow: 0 16px 56px rgba(233,178,94,0.34), 0 4px 12px rgba(0,0,0,0.22);
+  }
+  .pj-feature::before {
+    top: -50%; right: auto; left: -6%;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(233,178,94,0.30) 0%, transparent 70%);
+  }
+  .pj-feature::after {
+    bottom: -45%; left: auto; right: 18%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(99,102,241,0.30) 0%, transparent 70%);
+  }
+  .pj-feature .pj-icon {
+    width: 88px; height: 88px;
+    border-radius: 22px;
+    background: rgba(13,16,20,0.55);
+    border-color: rgba(233,178,94,0.45);
+    box-shadow: 0 0 32px rgba(233,178,94,0.25);
+  }
+  .pj-feature .pj-label { color: #f2c472; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pj-new {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e9b25e;
+    color: #1a1206;
+  }
+  .pj-feature .pj-title { font-size: 1.6rem; letter-spacing: 0.02em; }
+  .pj-feature .pj-desc { color: rgba(255,255,255,0.7); max-width: 46ch; }
+  .pj-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .pj-tags span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #c7d2fe;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+  .pj-term {
+    position: relative;
+    z-index: 1;
+    flex: 0 1 330px;
+    min-width: 0;
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(8,10,14,0.72);
+    border: 1px solid rgba(255,255,255,0.1);
+    font: 0.74rem/1.55 'Cascadia Mono', 'JetBrains Mono', Consolas, ui-monospace, monospace;
+    color: #cfd8e3;
+    white-space: pre;
+    overflow: hidden;
+  }
+  .pj-term .p { color: #e9b25e; }
+  .pj-term .y { color: #9fc3ee; }
+  .pj-term .w { color: #ff8a7a; }
+  .pj-term .c { display: inline-block; width: 0.6em; height: 1.05em; vertical-align: -0.18em;
+                background: #e9b25e; animation: pj-blink 1.1s steps(1) infinite; }
+  @keyframes pj-blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .pj-term .c { animation: none; } }
+  .pj-body, .pj-icon, .pj-arrow { position: relative; z-index: 1; }
+
+  @media (max-width: 860px) {
+    .pj-term { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .pj-card { padding: 24px 20px; gap: 18px; }
+    .pj-icon { width: 52px; height: 52px; font-size: 1.6rem; }
+    .pj-title { font-size: 1.05rem; }
+    .pj-arrow { display: none; }
+    .pj-feature { flex-direction: column; align-items: flex-start; }
+    .pj-feature .pj-icon { width: 72px; height: 72px; }
+    .pj-feature .pj-title { font-size: 1.35rem; }
+  }
+</style>
+
+<div class="pj-wrap">
+
+  <a class="pj-card pj-feature" href="https://elitrobban.se/fangdjupet-java-cli-spel/">
+    <div class="pj-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="58" height="58" viewBox="4 4 56 56" aria-hidden="true">
+        <defs>
+          <linearGradient id="fd-sten" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f6cd82"/>
+            <stop offset="1" stop-color="#c47a22"/>
+          </linearGradient>
+          <radialGradient id="fd-djup" cx="0.5" cy="0.62" r="0.5">
+            <stop offset="0" stop-color="#e9b25e" stop-opacity="0.45"/>
+            <stop offset="1" stop-color="#e9b25e" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <path d="M16.5 56V36a15.5 15.5 0 0 1 31 0v20z" fill="url(#fd-djup)"/>
+        <path d="M24 16.5c-3.2-3 3.2-5.2 0-9M32 15.5c-3.2-3 3.2-5.2 0-9M40 16.5c-3.2-3 3.2-5.2 0-9"
+              fill="none" stroke="#a5c8f0" stroke-width="2.6" stroke-linecap="round"/>
+        <g stroke="#c3cbd6" stroke-width="2.3" stroke-linecap="round">
+          <path d="M24 25v31M32 22v34M40 25v31"/>
+          <path d="M18 38h28M18 47h28"/>
+        </g>
+        <path d="M14 56V36a18 18 0 0 1 36 0v20" fill="none" stroke="url(#fd-sten)" stroke-width="5.2" stroke-linejoin="round"/>
+        <path d="M9 56.5h46" stroke="url(#fd-sten)" stroke-width="4.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt <span class="pj-new">Spela i webbläsaren</span></div>
+      <div class="pj-title">Fångdjupet</div>
+      <div class="pj-desc">Textbaserat rollspel i Java – slåss dig igenom skolan rum för rum och besegra Kapten Martin. Det riktiga Java-spelet körs på servern, du spelar det i en terminal på sidan.</div>
+      <div class="pj-tags"><span>Java 27</span><span>Strategy</span><span>Factory</span><span>Observer</span><span>JUnit</span><span>Grupparbete</span></div>
+    </div>
+<pre class="pj-term" aria-hidden="true"><span class="p">Skoldörren</span>
+1. Strid mot rummets fiende
+2. Gå till ett annat rum
+3. Visa hjältens utrustning
+4. Spara äventyret
+Välj ett alternativ: <span class="y">2</span>
+<span class="w">Entrédörren står i vägen!</span>
+Välj ett alternativ: <span class="c"></span></pre>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se/bilradgivning/">
+    <div class="pj-icon">🚗</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">AI Bilrådgivning</div>
+      <div class="pj-desc">Hitta rätt bil med AI — ange budget och behov och få tre skräddarsydda rekommendationer.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se/elbilsladdning/">
+    <div class="pj-icon">⚡</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">EVLadd &amp; Köpråd för elbilar</div>
+      <div class="pj-desc">Hitta snabbaste och billigaste laddstationen för din elbil och få köpråd inför ditt nästa elbilsköp — specialiserat för elbilar.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se/branslekostnad-berakning/">
+    <div class="pj-icon">🚙</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">Bränsle&shy;kostnads&shy;beräkning</div>
+      <div class="pj-desc">Räkna ut exakt vad din bilresa kostar i bränsle — med GPS, karta och fordonsval.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se">
+    <div class="pj-icon">🌤️</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">Väder&amp;Kläder</div>
+      <div class="pj-desc">Få smarta klädråd baserat på dagens väder — klä dig rätt varje dag.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se/minipristaget/">
+    <div class="pj-icon">🚄</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">MiniPrisTåget</div>
+      <div class="pj-desc">Sök din tågresa till bästa pris. Restresor med avgångstider, priser och tågmodeller.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se/biluthyrning/">
+    <div class="pj-icon">🔑</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">Biluthyrning</div>
+      <div class="pj-desc">Hyr bil enkelt och smidigt — välj fordon, datum och hämtplats med ett par klick.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se/bankomat-2-0/">
+    <div class="pj-icon">🏦</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">Bankomat 2.0</div>
+      <div class="pj-desc">Hantera konton och transaktioner i ett modernt bankomatsystem — byggt med Java och Spring Boot.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+  <a class="pj-card" href="https://elitrobban.se/bibliotekshanteraren-och-budgethanteraren/">
+    <div class="pj-icon">📚</div>
+    <div class="pj-body">
+      <div class="pj-label">Mitt projekt</div>
+      <div class="pj-title">Bibliotek &amp; Budget</div>
+      <div class="pj-desc">Två Java-konsolprogram från kursen — låna böcker eller håll koll på budgeten, direkt i webbläsaren.</div>
+    </div>
+    <div class="pj-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+    </div>
+  </a>
+
+</div>
