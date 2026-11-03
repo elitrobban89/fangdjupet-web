@@ -5,7 +5,7 @@ FROM eclipse-temurin:27-jdk AS build
 # Vilken gren av grupprepot som byggs.
 # Byt till main när #16, #18 och #20 är mergade (grenen tas bort vid merge).
 ARG GAME_REPO=ithsjava26/grupp8-fangdjupet
-ARG GAME_REF=feature/ascii-attacker
+ARG GAME_REF=feature/rumskarta
 
 ADD https://codeload.github.com/${GAME_REPO}/tar.gz/refs/heads/${GAME_REF} /tmp/game.tar.gz
 RUN mkdir -p /src/game \

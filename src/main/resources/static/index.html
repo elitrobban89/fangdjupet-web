@@ -39,9 +39,39 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;ba
 #hud{display:flex;align-items:center;gap:14px;padding:7px 16px;border-bottom:1px solid var(--line);background:var(--panel2);
   font-family:var(--mono);font-size:12.5px;flex-wrap:wrap}
 #hud[hidden]{display:none}
-#hud .room{color:var(--accent);letter-spacing:.06em}
 #hud .hero{display:flex;align-items:center;gap:8px;margin-left:auto}
 #hud .bar{width:110px}
+
+/* ── Kartan över rummen, alltid synlig. Klicka på ett öppet rum för att gå dit. ── */
+#map{display:flex;align-items:center;flex:1 1 420px;min-width:0}
+#map .node{display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel);color:var(--ink);font-family:var(--mono);font-size:12px;white-space:nowrap;position:relative;
+  transition:border-color .3s,background .3s,opacity .3s,transform .1s}
+#map .node:not([disabled]):hover{border-color:var(--accent);transform:translateY(-1px)}
+#map .node[disabled]{cursor:default}
+#map .node .mk{font-size:11px;font-weight:700;min-width:1em;text-align:center}
+#map .link{flex:1 1 18px;min-width:8px;max-width:46px;height:2px;background:var(--line);transition:background .4s}
+#map .link.on{background:linear-gradient(90deg,var(--accent),#b98a45)}
+#map .node[data-s="@"]{border-color:var(--accent);background:rgba(233,178,94,.14);color:#ffe2b0;
+  box-shadow:0 0 0 1px rgba(233,178,94,.25),0 0 18px -4px rgba(233,178,94,.7);animation:here 2.2s ease-in-out infinite}
+#map .node[data-s="@"] .mk{color:var(--accent)}
+#map .node[data-s="x"] .mk{color:var(--ok)}
+#map .node[data-s="!"] .mk{color:var(--red)}
+#map .node[data-s="!"]{border-color:rgba(255,107,91,.45)}
+#map .node[data-s="?"]{border-style:dashed;border-color:#6b5a3c}
+#map .node[data-s="?"] .mk{color:var(--accent)}
+#map .node[data-s="#"]{opacity:.42}
+#map .node.nope{animation:nope .35s}
+@keyframes here{50%{box-shadow:0 0 0 1px rgba(233,178,94,.35),0 0 26px -2px rgba(233,178,94,.85)}}
+@keyframes nope{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* gulmarkerat: något att plocka upp, en fiende som väntar, något att hitta */
+.hl,.hl .tx{color:#ffd65a!important}
+.opt.hl{background:rgba(255,214,90,.08);border-radius:5px;margin:0 -6px;padding:0 6px;animation:hlpulse 1.8s ease-in-out infinite}
+.ev.hl{background:rgba(255,214,90,.07);border-left:3px solid #ffd65a;padding-left:6px;margin-left:-9px;border-radius:0 5px 5px 0}
+.pending.hl{color:#ffd65a}
+#chips button.hl{border-color:#b8952e;color:#ffe08a;background:rgba(255,214,90,.07)}
+@keyframes hlpulse{50%{background:rgba(255,214,90,.16)}}
 
 #screen{flex:1;min-height:0;padding:14px 16px 18px;overflow:auto;
   font-family:var(--mono);font-size:clamp(11px,2.7vw,14.5px);line-height:1.38;tab-size:4}
@@ -174,7 +204,7 @@ form label{font-family:var(--mono);color:var(--accent);align-self:center}
 form .primary{padding:9px 16px;font-size:14px}
 footer{padding:6px 16px 10px;font-size:12px;color:var(--dim);display:flex;gap:12px;flex-wrap:wrap}
 footer a{color:var(--dim)}
-@media (max-width:560px){#chips{gap:5px;padding:6px 12px 0}#chips button{padding:4px 8px;font-size:12px}#hud{padding:6px 12px}#screen{padding:12px 12px 16px}form{padding:8px 12px 10px}}
+@media (max-width:560px){#chips{gap:5px;padding:6px 12px 0}#chips button{padding:4px 8px;font-size:12px}#hud{padding:6px 12px;gap:8px}#map{flex-basis:100%}#map .node{padding:4px 6px}#map .node:not([data-s="@"]) .nm{display:none}#hud .hero{margin-left:0}#screen{padding:12px 12px 16px}form{padding:8px 12px 10px}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -188,7 +218,7 @@ footer a{color:var(--dim)}
 
 <main id="main">
   <div id="hud" hidden>
-    <span class="room" id="hud-room">📍 –</span>
+    <nav id="map" aria-label="Karta över rummen"></nav>
     <span class="hero" id="hud-hero" hidden></span>
   </div>
   <div id="screen" role="log" aria-live="polite" aria-label="Spelets utskrift" tabindex="0"></div>
@@ -222,14 +252,18 @@ footer a{color:var(--dim)}
   const screen = $("screen"), mainEl = $("main"), fx = $("fx");
   const cover = $("cover"), coverMsg = $("cover-msg"), play = $("play"), restart = $("restart");
   const form = $("form"), line = $("line"), sendBtn = $("send"), chips = $("chips");
-  const hud = $("hud"), hudRoom = $("hud-room"), hudHero = $("hud-hero");
+  const hud = $("hud"), mapEl = $("map"), hudHero = $("hud-hero");
   const calm = matchMedia("(prefers-reduced-motion: reduce)");
 
   let session = null, pos = 0, generation = 0;
   let sinceInput = "";            // text sedan spelaren senast skickade något (för snabbvalen)
   let ansiHold = "";              // en färgkod som delats mellan två svar
   let red = false;                // ANSI-röd på (GAME OVER)
-  let partial = "", partialRed = false, pendingEl = null;
+  let yellow = false;             // ANSI-gul på (något att plocka upp, fiende som väntar)
+  let partial = "", partialRed = false, partialYellow = false, pendingEl = null;
+  let inMap = false, mapRows = [], mapState = [];   // kartan från spelet ("KARTA ...") ritas i HUD:en
+  let autoRoom = null;            // rummet spelaren klickade på i kartan (svaras på "Välj rum")
+  let hereFight = false;          // spelmenyn sa "(... väntar!)": en fiende lever i rummet
 
   // Läget för renderingen
   let lastEl = null;              // senaste färdiga raden (för "=====" under rubriker)
@@ -256,9 +290,55 @@ footer a{color:var(--dim)}
 
   // ---------- ikoner ----------
   const OPTION_ICONS = [
-    [/Strid/, "⚔️"], [/Gå till/, "🚪"], [/utrustning/, "🎒"], [/Spara/, "💾"], [/Leta/, "🔍"], [/Avsluta/, "⏏️"],
+    [/\(låst\)/, "🔒"], [/Strid/, "⚔️"], [/Gå till/, "🚪"], [/utrustning/, "🎒"], [/Spara/, "💾"], [/Leta/, "🔍"], [/Avsluta/, "⏏️"],
     [/Starta nytt/, "✨"], [/Fortsätt/, "▶️"], [/Närstrid/, "🗡️"], [/Magi/, "🔮"], [/Avstånd/, "🏹"],
-    [/DoomScroll/i, "📱"], [/JavaQuiz/, "❓"], [/StackOverflow/, "📚"], [/Dela skärm/, "🖥️"]];
+    [/DoomScroll/i, "📱"], [/JavaQuiz/, "❓"], [/StackOverflow/, "📚"], [/Dela skärm/, "🖥️"],
+    [/Skoldörren/, "🚪"], [/Kafferummet/, "☕"], [/Korridoren/, "🧹"], [/Lektionssalen/, "🎓"]];
+
+  // ---------- kartan ----------
+  const SHORT = ROOMS.map(r => r.split(" och ")[0].normalize("NFD").replace(/\p{M}/gu, ""));   // som spelets kartnamn
+  const ROOM_ICONS = ["🚪", "☕", "🧹", "🎓"];
+  const MARK = { "@": "📍", x: "✓", "!": "!", "?": "?", "#": "🔒" };
+  const STATE_TEXT = { "@": "du är här", x: "rensat", "!": "fiender kvar", "?": "nytt rum", "#": "låst" };
+
+  function drawMap(rows) {
+    const state = ROOMS.map(() => "#");
+    for (const r of rows) for (const m of r.matchAll(/\[(.)\] (\S+)/g)) {
+      const i = SHORT.indexOf(m[2]);
+      if (i >= 0) state[i] = m[1];
+    }
+    showMap(state);
+  }
+
+  // Ritar kartan från ett läge per rum: "@", "x", "!", "?" eller "#"
+  function showMap(state) {
+    const prev = mapState;
+    mapState = state;
+    hud.hidden = false;
+    mapEl.textContent = "";
+    state.forEach((s, i) => {
+      if (i > 0) mapEl.append(el("span", "link" + (s !== "#" ? " on" : "")));
+      const b = el("button", "node");
+      b.type = "button";
+      b.dataset.s = s;
+      b.title = ROOMS[i] + ": " + STATE_TEXT[s] + (s === "x" || s === "!" || s === "?" ? " – klicka för att gå dit" : "");
+      b.setAttribute("aria-label", b.title);
+      if (s === "@") b.setAttribute("aria-current", "location");
+      b.append(el("span", "ic", ROOM_ICONS[i]), el("span", "nm", ROOMS[i].split(" och ")[0]), el("span", "mk", MARK[s]));
+      b.addEventListener("click", () => goToRoom(i, b));
+      if (prev.length && prev[i] !== s) restartAnim(b, "appear");   // rummet bytte läge: liten studs
+      mapEl.append(b);
+    });
+  }
+
+  // Klick på ett rum i kartan: spelmenyn 2 och sedan rummets siffra
+  function goToRoom(i, b) {
+    const s = mapState[i];
+    if (!session || s === "@" || s === "#") { restartAnim(b, "nope"); return; }
+    if (/Välj rum/.test(partial)) { submit(String(i + 1)); return; }
+    if (/Välj ett alternativ/.test(partial) && /^Gå till/.test(options.get("2") || "")) { autoRoom = i + 1; submit("2"); return; }
+    restartAnim(b, "nope");   // mitt i en strid eller en fråga
+  }
   const iconFor = label => (OPTION_ICONS.find(([re]) => re.test(label)) || [, "•"])[1];
 
   // ---------- scroll ----------
@@ -365,7 +445,15 @@ footer a{color:var(--dim)}
   }
 
   // ---------- en färdig rad från spelet ----------
-  function renderLine(t, isRed) {
+  function renderLine(t, isRed, isYellow) {
+    // Kartan: "KARTA ..." och raderna under den ritas i HUD:en i stället för i loggen
+    if (/^KARTA\s/.test(t)) { inMap = true; mapRows = []; return; }
+    if (inMap) {
+      if (/^\[.\] /.test(t) || /^\s+\|\s*$/.test(t)) { mapRows.push(t); return; }
+      inMap = false;
+      drawMap(mapRows);
+    }
+
     // ASCII-bild: spelets vanliga rader börjar aldrig med blanksteg, bilderna gör det
     if (/^\s/.test(t) && t.trim() || (artBox && !t.trim())) {
       if (!artBox) {
@@ -399,10 +487,16 @@ footer a{color:var(--dim)}
       menuBox.firstChild.append(el("div", "ask", "🎯 Välj attack"));
       return;
     }
+    if (/^Vart vill du gå\?/.test(t)) {
+      menuBox = openMenu(); attackMenu = false;
+      menuBox.firstChild.append(el("div", "ask", "🧭 Vart vill du gå?"));
+      return;
+    }
     if ((m = t.match(/^([0-9]+|e)\.\s+(.+)$/))) {
       if (!menuBox) { menuBox = openMenu(); attackMenu = false; }
       options.set(m[1], m[2]);
-      const row = el("div", "opt");
+      if (m[1] === "1" && /^Strid/.test(m[2])) hereFight = /väntar!/.test(m[2]);   // lever någon i rummet?
+      const row = el("div", "opt" + (isYellow ? " hl" : ""));
       row.append(el("span", "ic", iconFor(m[2])), el("span", "key", m[1]), el("span", null, m[2]));
       menuBox.firstChild.append(row);
       lastEl = row;
@@ -447,7 +541,6 @@ footer a{color:var(--dim)}
     // Rum
     if (ROOMS.includes(t) || t === "Fangdjupet") {
       put(el("div", "room", (t === "Fangdjupet" ? "🏰 " : "📍 ") + t));
-      if (ROOMS.includes(t)) { hud.hidden = false; hudRoom.textContent = "📍 " + t; }
       return;
     }
     if (/^(Du står utanför|Det luktar|Korridoren känns|Du har nått fram)/.test(t)) { put(el("div", "desc", t)); return; }
@@ -461,9 +554,22 @@ footer a{color:var(--dim)}
 
     if ((m = t.match(/^Välkommen tillbaka, (.+)!$/))) heroName = m[1];
 
+    // "Du går till Kafferummet." – flytta 📍 i kartan direkt, inte först när menyn kommer
+    if ((m = t.match(/^Du går till (.+).$/)) && mapState.length && ROOMS.includes(m[1])) {
+      const state = mapState.map(s => s === "@" ? (hereFight ? "!" : "x") : s);
+      state[ROOMS.indexOf(m[1])] = "@";
+      showMap(state);
+    }
+
     // Allt annat: en ikon efter vad raden handlar om
     const RULES = [
       [/^(Visa hjältens utrustning|Starta nytt äventyr|Fortsätt sparat äventyr)\.$/, "echo", ""],
+      [/^Här ligger:/, "loot hl", "✨"],
+      [/^Du plockar upp:/, "loot", "✋"],
+      [/^Du låter .* ligga kvar/, "miss", "🚫"],
+      [/^Du går till/, "info", "🚶"],
+      [/^(Du stannar i|Du är redan i)/, "info", "🧍"],
+      [/ är låst\./, "warn", "🔒"],
       [/^Äventyret börjar!/, "big", "🗺️"],
       [/^Välkommen tillbaka/, "big", "👋"],   // namnet tas i renderLine
       [/\(\+\d+ hp\)/, "heal", "☕"],
@@ -485,12 +591,12 @@ footer a{color:var(--dim)}
       [/kaffe|kanelbulle|Kannan/, "info", "☕"]];
     const rule = RULES.find(([re]) => re.test(t));
     if (rule) {
-      const row = ev(rule[1], rule[2], t);
+      const row = ev(rule[1] + (isYellow ? " hl" : ""), rule[2], t);
       if (rule[1] === "heal") flash("green");
-      if (rule[1] === "loot") restartAnim(row, "appear");
+      if (rule[1].startsWith("loot")) restartAnim(row, "appear");
       return;
     }
-    ev("info", "", t);
+    ev("info" + (isYellow ? " hl" : ""), isYellow ? "✨" : "", t);
   }
 
   function openMenu() {
@@ -505,7 +611,7 @@ footer a{color:var(--dim)}
     if (pendingEl) pendingEl.remove();
     pendingEl = null;
     if (!partial) return;
-    pendingEl = el("div", "ln pending", partial);
+    pendingEl = el("div", "ln pending" + (partialYellow ? " hl" : ""), partial);
     pendingEl.append(el("span", "cursor"));
     screen.appendChild(pendingEl);
   }
@@ -520,18 +626,19 @@ footer a{color:var(--dim)}
     for (let i = 0; i < parts.length; i++) {
       if (i % 2 === 1) {
         for (const code of (parts[i] || "0").split(";")) {
-          if (code === "0" || code === "" || code === "39") red = false;
+          if (code === "0" || code === "" || code === "39") { red = false; yellow = false; }
           else if (code === "31" || code === "91") red = true;
+          else if (code === "33" || code === "93") yellow = true;
         }
         continue;
       }
       const pieces = parts[i].split("\n");
       for (let j = 0; j < pieces.length; j++) {
-        if (pieces[j]) { partial += pieces[j]; partialRed ||= red; }
+        if (pieces[j]) { partial += pieces[j]; partialRed ||= red; partialYellow ||= yellow; }
         if (j < pieces.length - 1) {
           if (pendingEl) { pendingEl.remove(); pendingEl = null; }
-          renderLine(partial, partialRed);
-          partial = ""; partialRed = red;
+          renderLine(partial, partialRed, partialYellow);
+          partial = ""; partialRed = red; partialYellow = yellow;
         }
       }
     }
@@ -539,18 +646,31 @@ footer a{color:var(--dim)}
     sinceInput += text.replace(/\x1b\[[0-9;]*m/g, "");
     updateChips();
     scrollToEnd();
+    // Klickade spelaren på ett rum i kartan: svara på "Välj rum" med rummets siffra
+    if (autoRoom && /Välj rum/.test(partial)) {
+      const r = autoRoom;
+      autoRoom = null;
+      setTimeout(() => submit(String(r)), 120);
+    }
   }
 
   // Spelaren svarade: menyn fälls ihop och svaret visas som "› 🔮 Magi"
   function answered(value) {
     if (pendingEl) { pendingEl.remove(); pendingEl = null; }
     const prompt = partial;
-    partial = ""; partialRed = false;
-    const isChoice = /(Välj ett alternativ|Ditt val)/.test(prompt);
+    partial = ""; partialRed = false; partialYellow = false;
+    const isPick = /\(j\/n\)/.test(prompt);
+    const isChoice = /(Välj ett alternativ|Ditt val|Välj rum)/.test(prompt);
     const row = el("div", "answer");
-    if (isChoice) {
-      const label = value === "" ? "Behåll attacken" : options.get(value.trim());
-      row.append(el("span", "ic", label ? (value === "" ? "↩️" : iconFor(label)) : "›"), el("span", null, label || value || "(Enter)"));
+    if (isPick) {
+      const yes = /^(j|ja|y|yes)$/i.test(value.trim());   // samma regel som spelet (wantsIt)
+      row.append(el("span", "ic", yes ? "✋" : "🚫"), el("span", null, yes ? "Plocka upp" : "Lämna kvar"));
+    } else if (isChoice) {
+      const stay = /Välj rum/.test(prompt);
+      let label = value === "" ? (stay ? "Stanna kvar" : "Behåll attacken") : options.get(value.trim());
+      if (label) label = label.replace(/\s+\(.*\)$/, "");   // "(du är här)", "(Entrédörren väntar!)" ...
+      const icon = !label ? "›" : value === "" ? (stay ? "🧍" : "↩️") : iconFor(label);
+      row.append(el("span", "ic", icon), el("span", null, label || value || "(Enter)"));
       document.querySelectorAll(".menu:not(.done)").forEach(b => b.classList.add("done"));
       if (attackMenu && value !== "") nextArt = "atk";
     } else {
@@ -567,17 +687,20 @@ footer a{color:var(--dim)}
     chips.textContent = "";
     if (!session) return;
     const t = sinceInput;
-    if (!/(Välj ett alternativ|Ditt val|Välj attack)[^\n]*:\s*$/.test(t)) return;
-    const seen = new Set();
-    for (const m of t.matchAll(/^\s*([0-9]+|e)\.\s+(.+?)\s*$/gm)) {
-      if (seen.has(m[1])) continue;
-      seen.add(m[1]);
-      chip(m[1], m[2], m[1], iconFor(m[2]));
+    if (/\(j\/n\):\s*$/.test(t)) {          // "Plocka upp Pilbåge? (j/n): "
+      chip("j", "Ja, plocka upp", "j", "✋", true);
+      chip("n", "Nej, lämna kvar", "n", "🚫");
+      return;
     }
+    if (!/(Välj ett alternativ|Ditt val|Välj attack|Välj rum)[^\n]*:\s*$/.test(t)) return;
+    const found = new Map();                // senaste menyn vinner om flera syns
+    for (const m of t.matchAll(/^\s*([0-9]+|e)\.\s+(.+?)\s*$/gm)) found.set(m[1], m[2]);
+    for (const [key, label] of found) chip(key, label, key, iconFor(label), /väntar!|något finns här!/.test(label));
     if (/Enter = behåll/.test(t)) chip("↵", "Behåll attacken", "", "↩️");
+    if (/Enter = stanna/.test(t)) chip("↵", "Stanna kvar", "", "🧍");
   }
-  function chip(key, label, value, icon) {
-    const b = el("button");
+  function chip(key, label, value, icon, hl) {
+    const b = el("button", hl ? "hl" : null);
     b.type = "button";
     b.style.animationDelay = chips.childElementCount * 30 + "ms";
     b.append(el("span", "ic", icon), el("b", null, key), label);
@@ -624,7 +747,8 @@ footer a{color:var(--dim)}
   }
 
   function resetView() {
-    pos = 0; sinceInput = ""; ansiHold = ""; red = false;
+    pos = 0; sinceInput = ""; ansiHold = ""; red = false; yellow = false;
+    partialYellow = false; inMap = false; mapRows = []; mapState = []; autoRoom = null; mapEl.textContent = "";
     partial = ""; partialRed = false; pendingEl = null;
     lastEl = null; artBox = null; menuBox = null; options = new Map(); attackMenu = false; nextArt = "";
     heroName = null; expectHero = false; inFight = false; hpSeen.clear();

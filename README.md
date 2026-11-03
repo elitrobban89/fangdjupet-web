@@ -30,7 +30,7 @@ kopplar processens `System.in` och `System.out` till en terminal på webbsidan.
 | `src/main/java/se/elitrobban/fangdjupet/WebServer.java` | HTTP-servern: sidan, API:t och städningen |
 | `src/main/java/se/elitrobban/fangdjupet/GameSession.java` | Ett spel: processen, utskriftsbufferten och inmatningen |
 | `src/main/java/se/elitrobban/fangdjupet/Config.java` | Inställningar från miljövariabler |
-| `src/main/resources/static/index.html` | Terminalen i webbläsaren: läser spelets rader och ritar dem med ikoner, hp-staplar, en HUD (rum + hjältens hp), menyer som fälls ihop när man valt, attackbilder som sveper in, skakande skärm och röd blixt när hjälten tar skada, konfetti vid vinst. `prefers-reduced-motion` stänger av rörelserna. |
+| `src/main/resources/static/index.html` | Terminalen i webbläsaren: läser spelets rader och ritar dem med ikoner, hp-staplar, en HUD med en klickbar karta över rummen (spelets `KARTA`-rader) och hjältens hp, knappar för j/n och rumsval, gulmarkerade val, menyer som fälls ihop när man valt, attackbilder som sveper in, skakande skärm och röd blixt när hjälten tar skada, konfetti vid vinst. `prefers-reduced-motion` stänger av rörelserna. |
 | `src/main/resources/static/icon.svg` | Ikonen (favicon) |
 | `src/main/resources/static/card.svg` | Projektkort 1200×630 ("Mitt projekt") |
 | `wordpress/projektkort.html` | Kortet till projektrutnätet på elitrobban.se |
@@ -58,7 +58,7 @@ java -cp target/classes se.elitrobban.fangdjupet.WebServer
 3. Render ger en adress, t.ex. `https://fangdjupet.onrender.com`. Öppna den och tryck **Starta spelet**.
 
 Docker-bygget hämtar spelet direkt från grupprepot, grenen i `ARG GAME_REF` i `Dockerfile`.
-**När #16, #18, #20 och #21 är mergade: byt `GAME_REF` till `main`** – grenen `feature/ascii-attacker`
+**När #16, #18, #20, #21 och #22 är mergade: byt `GAME_REF` till `main`** – grenen `feature/rumskarta`
 tas bort vid merge, och då går bygget inte längre. Kör sedan **Manual Deploy → Clear build cache & deploy**
 när grupprepot har ändrats.
 
