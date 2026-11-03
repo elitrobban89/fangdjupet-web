@@ -662,7 +662,6 @@ footer a{color:var(--dim)}
     input.maxLength = 200;
     input.autocomplete = "off";
     input.spellcheck = false;
-    input.setAttribute("enterkeyhint", "send");
     input.setAttribute("aria-label", partial.trim() || "Ditt svar");
     input.value = typed;
     const fit = () => { input.style.width = Math.max(2, input.value.length + 1) + "ch"; };
