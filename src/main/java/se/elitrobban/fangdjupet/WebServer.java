@@ -51,7 +51,8 @@ public final class WebServer {
             "/index.html", new StaticFile("index.html", "text/html; charset=utf-8"),
             "/icon.svg", new StaticFile("icon.svg", "image/svg+xml"),
             "/favicon.svg", new StaticFile("icon.svg", "image/svg+xml"),
-            "/card.svg", new StaticFile("card.svg", "image/svg+xml"));
+            "/card.svg", new StaticFile("card.svg", "image/svg+xml"),
+            "/sound.js", new StaticFile("sound.js", "text/javascript; charset=utf-8"));   // musiken och ljuden
 
     private record StaticFile(String name, String type) { }
 
