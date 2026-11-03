@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fångdjupet</title>
+<meta name="description" content="Fångdjupet – ett textbaserat rollspel i Java, spelbart i webbläsaren. Det riktiga Java-spelet körs på servern.">
+<meta name="theme-color" content="#0d1014">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<meta property="og:title" content="Fångdjupet – Javaspel i terminalen">
+<meta property="og:description" content="Ett textbaserat rollspel i Java. Spela det riktiga spelet direkt i webbläsaren.">
+<meta property="og:image" content="/card.svg">
+<style>
+:root{
+  --bg:#0d1014; --panel:#12161c; --line:#232a33; --ink:#d5dde6; --dim:#7d8996;
+  --accent:#e9b25e; --accent-ink:#1a1206; --you:#9fc3ee; --red:#ff6b5b; --ok:#74bc96;
+  --mono:"Cascadia Mono","JetBrains Mono","SF Mono",Consolas,"Liberation Mono",ui-monospace,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);display:flex;flex-direction:column;min-height:0}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-family:var(--mono);font-size:16px;letter-spacing:.12em;margin:0;color:var(--accent);display:flex;align-items:center;gap:10px}
+header h1 img{width:30px;height:30px;display:block}
+.tag{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;background:var(--accent);color:var(--accent-ink);padding:3px 8px;border-radius:999px}
+#cover .logo{width:min(132px,30vw);height:auto;filter:drop-shadow(0 8px 24px rgba(233,178,94,.18))}
+header p{margin:0;font-size:13px;color:var(--dim);flex:1;min-width:180px}
+button{font:inherit;cursor:pointer;border-radius:6px}
+.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);padding:6px 12px;font-size:13px}
+.ghost:hover{border-color:var(--dim)}
+.primary{background:var(--accent);color:var(--accent-ink);border:0;padding:12px 22px;font-weight:700;font-size:15px}
+.primary:hover{filter:brightness(1.08)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--you);outline-offset:2px}
+
+main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+#screen{flex:1;min-height:0;margin:0;padding:14px 16px;overflow:auto;background:var(--panel);
+  font-family:var(--mono);font-size:clamp(11px,2.7vw,14.5px);line-height:1.38;white-space:pre;tab-size:4}
+#screen .you{color:var(--you)}
+#screen .red{color:var(--red)}
+#screen .bold{font-weight:700}
+#screen .sys{color:var(--dim);font-style:italic}
+
+#cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:24px 16px;text-align:center;background:color-mix(in srgb,var(--panel) 94%,transparent)}
+#cover[hidden]{display:none}
+#cover h2{margin:0;font-family:var(--mono);font-size:clamp(22px,6vw,34px);letter-spacing:.14em;color:var(--accent)}
+#cover p{margin:0;max-width:46ch;color:var(--dim);font-size:14px;line-height:1.5}
+#cover .msg{color:var(--ink)}
+
+#chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px 0;background:var(--bg)}
+#chips:empty{display:none}
+#chips button{background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:6px 10px;font-family:var(--mono);font-size:13px}
+#chips button:hover{border-color:var(--accent)}
+#chips b{color:var(--accent);font-weight:700;margin-right:6px}
+
+form{display:flex;gap:8px;padding:10px 16px 12px;background:var(--bg);border-top:1px solid var(--line)}
+form label{font-family:var(--mono);color:var(--accent);align-self:center}
+#line{flex:1;min-width:0;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;
+  padding:9px 10px;font-family:var(--mono);font-size:16px}
+#line:disabled{opacity:.5}
+form .primary{padding:9px 16px;font-size:14px}
+footer{padding:6px 16px 10px;font-size:12px;color:var(--dim);display:flex;gap:12px;flex-wrap:wrap}
+footer a{color:var(--dim)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<header>
+  <h1><img src="/icon.svg" alt="">FÅNGDJUPET</h1>
+  <span class="tag">MITT PROJEKT</span>
+  <p>Ett textbaserat rollspel i Java – det riktiga spelet körs på servern.</p>
+  <button type="button" class="ghost" id="restart" hidden>Starta om</button>
+</header>
+
+<main>
+  <pre id="screen" aria-live="polite" aria-label="Spelets utskrift" tabindex="0"></pre>
+  <div id="cover">
+    <img class="logo" src="/icon.svg" alt="Fångdjupets ikon: ett stenvalv med galler och Java-ånga">
+    <h2>FÅNGDJUPET</h2>
+    <p>Ta dig igenom skolan rum för rum och besegra Kapten Martin. Välj med siffror – eller klicka på knapparna under terminalen.</p>
+    <p class="msg" id="cover-msg" hidden></p>
+    <button type="button" class="primary" id="play">Starta spelet</button>
+  </div>
+</main>
+
+<div id="chips" aria-label="Snabbval"></div>
+<form id="form" autocomplete="off">
+  <label for="line" aria-hidden="true">&gt;</label>
+  <span class="sr">Skriv ditt val</span>
+  <input id="line" name="line" maxlength="200" placeholder="Skriv och tryck Enter" disabled enterkeyhint="send">
+  <button type="submit" class="primary" id="send" disabled>Skicka</button>
+</form>
+<footer>
+  <span>Java 27 · grupp 8 · ITHS · <a href="https://elitrobban.se/" target="_blank" rel="noopener">elitrobban.se</a></span>
+  <a href="https://github.com/ithsjava26/grupp8-fangdjupet" target="_blank" rel="noopener">Källkoden på GitHub</a>
+  <span>Sparningen finns kvar ett dygn på den här enheten.</span>
+</footer>
+
+<script>
+(() => {
+  const screen = document.getElementById("screen");
+  const cover = document.getElementById("cover");
+  const coverMsg = document.getElementById("cover-msg");
+  const play = document.getElementById("play");
+  const restart = document.getElementById("restart");
+  const form = document.getElementById("form");
+  const line = document.getElementById("line");
+  const sendBtn = document.getElementById("send");
+  const chips = document.getElementById("chips");
+
+  let session = null, pos = 0, generation = 0;
+  let sinceInput = "";            // text sedan spelaren senast skickade något (för snabbvalen)
+  let ansiHold = "";              // en färgkod som delats mellan två svar
+  let style = { red: false, bold: false };
+
+  // Spelar-id i webbläsaren: samma id → samma sparfil på servern
+  const playerId = (() => {
+    const make = () => (crypto.randomUUID ? crypto.randomUUID()
+      : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
+    try {
+      let id = localStorage.getItem("fangdjupet-player");
+      if (!id) { id = make(); localStorage.setItem("fangdjupet-player", id); }
+      return id;
+    } catch { return make(); }
+  })();
+
+  // ---- utskrift ----
+  const nearBottom = () => screen.scrollHeight - screen.scrollTop - screen.clientHeight < 60;
+
+  function append(text, cls) {
+    const stick = nearBottom();
+    const span = document.createElement("span");
+    if (cls) span.className = cls;
+    span.textContent = text;
+    screen.appendChild(span);
+    while (screen.textContent.length > 300000 && screen.firstChild) screen.removeChild(screen.firstChild);
+    if (stick) screen.scrollTop = screen.scrollHeight;
+  }
+
+  // Spelets GAME OVER är röd med ANSI-koder (\x1b[31m … \x1b[0m) – de blir färg här
+  function appendAnsi(text) {
+    text = (ansiHold + text).replace(/\r\n?/g, "\n");   // Windows-radslut när servern körs lokalt
+    ansiHold = "";
+    const cut = text.match(/\x1b(\[[0-9;]*)?$/);
+    if (cut) { ansiHold = cut[0]; text = text.slice(0, -cut[0].length); }
+    const parts = text.split(/\x1b\[([0-9;]*)m/);
+    for (let i = 0; i < parts.length; i++) {
+      if (i % 2 === 0) {
+        if (parts[i]) append(parts[i], [style.red && "red", style.bold && "bold"].filter(Boolean).join(" "));
+      } else {
+        for (const code of (parts[i] || "0").split(";")) {
+          if (code === "0" || code === "") style = { red: false, bold: false };
+          else if (code === "1") style.bold = true;
+          else if (code === "31" || code === "91") style.red = true;
+          else if (code === "39") style.red = false;
+        }
+      }
+    }
+    sinceInput += text.replace(/\x1b\[[0-9;]*m/g, "");
+    updateChips();
+  }
+
+  // ---- snabbval: menyraderna "1. Strid mot …" blir knappar ----
+  function updateChips() {
+    chips.textContent = "";
+    if (!session) return;
+    const t = sinceInput;
+    const waiting = /(Välj ett alternativ|Ditt val|Välj attack)[^\n]*:\s*$/.test(t);
+    if (!waiting) return;
+    const seen = new Set();
+    for (const m of t.matchAll(/^\s*([0-9]+|e)\.\s+(.+?)\s*$/gm)) {
+      if (seen.has(m[1])) continue;
+      seen.add(m[1]);
+      chip(m[1], m[2], m[1]);
+    }
+    if (/Enter = behåll/.test(t)) chip("↵", "Behåll attacken", "");
+  }
+
+  function chip(key, label, value) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const k = document.createElement("b");
+    k.textContent = key;
+    b.append(k, label);
+    b.addEventListener("click", () => submit(value));
+    chips.appendChild(b);
+  }
+
+  // ---- server ----
+  async function api(path, opts = {}) {
+    const r = await fetch(path, { cache: "no-store", ...opts });
+    let body = {};
+    try { body = await r.json(); } catch {}
+    return { status: r.status, body };
+  }
+
+  function setPlaying(on) {
+    line.disabled = !on;
+    sendBtn.disabled = !on;
+    restart.hidden = !on && !session;
+    if (on) line.focus({ preventScroll: true });
+  }
+
+  function showCover(message, buttonText) {
+    chips.textContent = "";
+    coverMsg.hidden = !message;
+    coverMsg.textContent = message || "";
+    play.textContent = buttonText || "Starta spelet";
+    play.disabled = false;
+    cover.hidden = false;
+  }
+
+  async function wakeServer() {
+    // Gratisservern på Render somnar efter 15 minuter; första anropet väcker den
+    for (let i = 0; i < 30; i++) {
+      try {
+        const r = await fetch("/health", { cache: "no-store" });
+        if (r.ok) return true;
+      } catch {}
+      coverMsg.hidden = false;
+      coverMsg.textContent = "Väcker servern … det kan ta upp till en minut första gången.";
+      await new Promise(res => setTimeout(res, 3000));
+    }
+    return false;
+  }
+
+  async function startGame() {
+    play.disabled = true;
+    coverMsg.hidden = false;
+    coverMsg.textContent = "Startar …";
+    if (session) await stopGame();
+    if (!(await wakeServer())) { showCover("Servern svarar inte just nu. Försök igen om en stund.", "Försök igen"); return; }
+
+    const { status, body } = await api("/api/start?player=" + encodeURIComponent(playerId), { method: "POST" });
+    if (status === 503 && body.error === "full") {
+      showCover(`Alla platser är upptagna just nu (högst ${body.max} spelare samtidigt). Försök igen om en stund.`, "Försök igen");
+      return;
+    }
+    if (status !== 200) { showCover("Spelet kunde inte startas. Försök igen.", "Försök igen"); return; }
+
+    session = body.session;
+    pos = 0; sinceInput = ""; ansiHold = ""; style = { red: false, bold: false };
+    screen.textContent = "";
+    cover.hidden = true;
+    setPlaying(true);
+    poll(++generation);
+  }
+
+  async function poll(gen) {
+    while (session && gen === generation) {
+      let res;
+      try {
+        res = await api(`/api/output?session=${encodeURIComponent(session)}&from=${pos}`);
+      } catch {
+        await new Promise(r => setTimeout(r, 1500));
+        continue;
+      }
+      if (gen !== generation) return;
+      if (res.status === 404) { ended("Spelet stängdes efter en stund utan aktivitet."); return; }
+      if (res.status !== 200) { await new Promise(r => setTimeout(r, 1500)); continue; }
+      if (res.body.text) appendAnsi(res.body.text);
+      pos = res.body.next;
+      if (res.body.ended) { ended("Spelet är slut."); return; }
+    }
+  }
+
+  function ended(message) {
+    session = null;
+    generation++;
+    setPlaying(false);
+    restart.hidden = true;
+    append("\n" + message + "\n", "sys");
+    showCover(message + " Ditt sparade äventyr finns kvar – välj 2 i huvudmenyn för att fortsätta.", "Spela igen");
+  }
+
+  async function stopGame() {
+    const s = session;
+    session = null;
+    generation++;
+    if (s) { try { await api("/api/stop?session=" + encodeURIComponent(s), { method: "POST" }); } catch {} }
+  }
+
+  async function submit(value) {
+    if (!session) return;
+    append(value + "\n", "you");
+    sinceInput = "";
+    chips.textContent = "";
+    line.value = "";
+    line.focus({ preventScroll: true });
+    try {
+      const { status } = await api("/api/input?session=" + encodeURIComponent(session), {
+        method: "POST", headers: { "Content-Type": "text/plain; charset=utf-8" }, body: value
+      });
+      if (status !== 200) ended("Spelet stängdes efter en stund utan aktivitet.");
+    } catch {
+      append("(kunde inte skicka – kontrollera anslutningen)\n", "sys");
+    }
+  }
+
+  form.addEventListener("submit", e => { e.preventDefault(); submit(line.value); });
+  play.addEventListener("click", startGame);
+  restart.addEventListener("click", startGame);
+  screen.addEventListener("click", () => { if (!line.disabled && !getSelection().toString()) line.focus({ preventScroll: true }); });
+  window.addEventListener("pagehide", () => {
+    if (session) navigator.sendBeacon("/api/stop?session=" + encodeURIComponent(session));
+  });
+})();
+</script>
+</body>
+</html>

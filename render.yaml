@@ -1,0 +1,16 @@
+# Render Blueprint: New → Blueprint → välj det här repot
+services:
+  - type: web
+    name: fangdjupet
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: MAX_SESSIONS        # varje spel är en egen JVM (~40 MB), gratisplanen har 512 MB
+        value: "5"
+      - key: IDLE_MINUTES
+        value: "10"
+      - key: MAX_MINUTES
+        value: "60"
+      - key: FRAME_ANCESTORS     # vilka sidor som får visa spelet i en iframe
+        value: "'self' https://elitrobban.se https://www.elitrobban.se"

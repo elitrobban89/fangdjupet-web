@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Fångdjupet">
+  <title>Fångdjupet – Javaspelet</title>
+  <defs>
+    <linearGradient id="sten" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6cd82"/>
+      <stop offset="1" stop-color="#c47a22"/>
+    </linearGradient>
+    <radialGradient id="djup" cx="0.5" cy="0.62" r="0.5">
+      <stop offset="0" stop-color="#e9b25e" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#e9b25e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- bakgrund -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#11151b"/>
+  <rect x="2.75" y="2.75" width="58.5" height="58.5" rx="13.25" fill="none" stroke="#2c343e" stroke-width="1.5"/>
+  <!-- ljuset längst in i djupet -->
+  <path d="M16.5 56V36a15.5 15.5 0 0 1 31 0v20z" fill="url(#djup)"/>
+  <!-- Java-ångan som stiger ur valvet -->
+  <path d="M24 16.5c-3.2-3 3.2-5.2 0-9M32 15.5c-3.2-3 3.2-5.2 0-9M40 16.5c-3.2-3 3.2-5.2 0-9"
+        fill="none" stroke="#9fc3ee" stroke-width="2.6" stroke-linecap="round"/>
+  <!-- gallret -->
+  <g stroke="#8a96a3" stroke-width="2.2" stroke-linecap="round">
+    <path d="M24 25v31M32 22v34M40 25v31"/>
+    <path d="M18 38h28M18 47h28"/>
+  </g>
+  <!-- stenvalvet -->
+  <path d="M14 56V36a18 18 0 0 1 36 0v20" fill="none" stroke="url(#sten)" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M9 56.5h46" stroke="url(#sten)" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Fångdjupet – Javaspel i terminalen. Mitt projekt.">
+  <title>Fångdjupet – Javaspel i terminalen · Mitt projekt</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#151a21"/>
+      <stop offset="1" stop-color="#0b0e12"/>
+    </linearGradient>
+    <linearGradient id="sten" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6cd82"/>
+      <stop offset="1" stop-color="#c47a22"/>
+    </linearGradient>
+    <radialGradient id="djup" cx="0.5" cy="0.62" r="0.5">
+      <stop offset="0" stop-color="#e9b25e" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#e9b25e" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="rutor" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0v24" fill="none" stroke="#1d242d" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#rutor)" opacity="0.6"/>
+
+  <!-- ikonen, stor -->
+  <g transform="translate(90 115) scale(6.25)">
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="#11151b"/>
+    <rect x="2.75" y="2.75" width="58.5" height="58.5" rx="13.25" fill="none" stroke="#2c343e" stroke-width="1.2"/>
+    <path d="M16.5 56V36a15.5 15.5 0 0 1 31 0v20z" fill="url(#djup)"/>
+    <path d="M24 16.5c-3.2-3 3.2-5.2 0-9M32 15.5c-3.2-3 3.2-5.2 0-9M40 16.5c-3.2-3 3.2-5.2 0-9"
+          fill="none" stroke="#9fc3ee" stroke-width="2.6" stroke-linecap="round"/>
+    <g stroke="#8a96a3" stroke-width="2.2" stroke-linecap="round">
+      <path d="M24 25v31M32 22v34M40 25v31"/>
+      <path d="M18 38h28M18 47h28"/>
+    </g>
+    <path d="M14 56V36a18 18 0 0 1 36 0v20" fill="none" stroke="url(#sten)" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M9 56.5h46" stroke="url(#sten)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- text -->
+  <g font-family="'Cascadia Mono','JetBrains Mono',Consolas,'Liberation Mono',monospace">
+    <rect x="560" y="150" width="210" height="44" rx="22" fill="#e9b25e"/>
+    <text x="665" y="180" text-anchor="middle" font-size="20" font-weight="700" letter-spacing="3" fill="#1a1206">MITT PROJEKT</text>
+
+    <text x="556" y="290" font-size="80" font-weight="700" letter-spacing="8" fill="#f2c472">FÅNGDJUPET</text>
+    <text x="560" y="346" font-size="26" fill="#d5dde6" font-family="system-ui,'Segoe UI',Roboto,sans-serif">Javaspel i terminalen – spela i webbläsaren</text>
+
+    <text x="560" y="420" font-size="24" fill="#9fc3ee">&gt; Strid mot rummets fiende_</text>
+    <text x="560" y="470" font-size="21" fill="#7d8996">Java 27 · Strategy · Factory · Observer · JUnit</text>
+    <text x="560" y="506" font-size="21" fill="#7d8996">Grupp 8 · ITHS · Robert Andersson Kopler</text>
+  </g>
+</svg>

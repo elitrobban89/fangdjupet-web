@@ -1,0 +1,40 @@
+<!-- Fångdjupet – innehållet på https://elitrobban.se/fangdjupet-java-cli-spel/
+     Lägg in som ett Custom HTML-block. Byt SPELADRESS mot adressen Render ger tjänsten,
+     t.ex. https://fangdjupet.onrender.com (två ställen). -->
+<style>
+  .fd-wrap { max-width: 1100px; margin: 32px auto; padding: 0 8px;
+             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .fd-intro { color: inherit; line-height: 1.6; margin: 0 0 20px; }
+  .fd-intro p { margin: 0 0 10px; }
+  .fd-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+  .fd-chips li { font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 999px;
+                 background: linear-gradient(135deg, #1e2a4a, #2d1f5e); color: #c7d2fe; }
+  .fd-frame { position: relative; border-radius: 20px; overflow: hidden; background: #0d1014;
+              box-shadow: 0 8px 40px rgba(99,102,241,0.25), 0 2px 8px rgba(0,0,0,0.15); }
+  .fd-frame iframe { display: block; width: 100%; height: min(82vh, 780px); min-height: 540px; border: 0; }
+  .fd-links { margin: 14px 0 0; font-size: 0.9rem; }
+  .fd-links a { margin-right: 16px; }
+  @media (max-width: 580px) { .fd-frame iframe { height: 78vh; min-height: 480px; } }
+</style>
+
+<div class="fd-wrap">
+  <div class="fd-intro">
+    <p><strong>Fångdjupet</strong> är ett textbaserat rollspel i Java som vi byggde i grupp (tre personer) i kursen
+       Javaprogrammering på ITHS. Hjälten tar sig igenom skolan rum för rum – Skoldörren, Kafferummet, Korridoren
+       och Lektionssalen – och möter till sist Kapten Martin.</p>
+    <p>Spelet nedan är <em>det riktiga Java-programmet</em>: det körs på en server och du spelar det genom en terminal
+       i webbläsaren. Välj med siffror, eller klicka på knapparna under terminalen.</p>
+    <ul class="fd-chips">
+      <li>Java 27</li><li>Strategy</li><li>Factory</li><li>Observer</li><li>JUnit – 298 tester</li><li>GitHub Actions</li>
+    </ul>
+  </div>
+
+  <div class="fd-frame">
+    <iframe src="SPELADRESS/" title="Fångdjupet – spela i webbläsaren" loading="lazy"></iframe>
+  </div>
+
+  <p class="fd-links">
+    <a href="SPELADRESS/" target="_blank" rel="noopener">Öppna spelet i helskärm</a>
+    <a href="https://github.com/ithsjava26/grupp8-fangdjupet" target="_blank" rel="noopener">Källkoden på GitHub</a>
+  </p>
+</div>
