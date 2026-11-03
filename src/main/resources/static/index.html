@@ -12,19 +12,19 @@
 <meta property="og:image" content="/card.svg">
 <style>
 :root{
-  --bg:#0d1014; --panel:#12161c; --line:#232a33; --ink:#d5dde6; --dim:#7d8996;
-  --accent:#e9b25e; --accent-ink:#1a1206; --you:#9fc3ee; --red:#ff6b5b; --ok:#74bc96;
+  --bg:#0d1014; --panel:#12161c; --panel2:#171c24; --line:#232a33; --ink:#d5dde6; --dim:#7d8996;
+  --accent:#e9b25e; --accent-ink:#1a1206; --you:#9fc3ee; --red:#ff6b5b; --ok:#74bc96; --art:#c8b48e; --magic:#b79cff;
   --mono:"Cascadia Mono","JetBrains Mono","SF Mono",Consolas,"Liberation Mono",ui-monospace,monospace;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);display:flex;flex-direction:column;min-height:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);display:flex;flex-direction:column;min-height:0;overflow:hidden}
 header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 header h1{font-family:var(--mono);font-size:16px;letter-spacing:.12em;margin:0;color:var(--accent);display:flex;align-items:center;gap:10px}
 header h1 img{width:30px;height:30px;display:block}
 .tag{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;background:var(--accent);color:var(--accent-ink);padding:3px 8px;border-radius:999px}
-#cover .logo{width:min(132px,30vw);height:auto;filter:drop-shadow(0 8px 24px rgba(233,178,94,.18))}
+#cover .logo{width:min(132px,30vw);height:auto;filter:drop-shadow(0 8px 24px rgba(233,178,94,.18));animation:float 4s ease-in-out infinite}
 header p{margin:0;font-size:13px;color:var(--dim);flex:1;min-width:180px}
 button{font:inherit;cursor:pointer;border-radius:6px}
 .ghost{background:transparent;color:var(--ink);border:1px solid var(--line);padding:6px 12px;font-size:13px}
@@ -33,26 +33,138 @@ button{font:inherit;cursor:pointer;border-radius:6px}
 .primary:hover{filter:brightness(1.08)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--you);outline-offset:2px}
 
-main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
-#screen{flex:1;min-height:0;margin:0;padding:14px 16px;overflow:auto;background:var(--panel);
-  font-family:var(--mono);font-size:clamp(11px,2.7vw,14.5px);line-height:1.38;white-space:pre;tab-size:4}
-#screen .you{color:var(--you)}
-#screen .red{color:var(--red)}
-#screen .bold{font-weight:700}
-#screen .sys{color:var(--dim);font-style:italic}
+main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;background:var(--panel)}
 
-#cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+/* ── HUD: rummet och hjältens hp, alltid synligt ── */
+#hud{display:flex;align-items:center;gap:14px;padding:7px 16px;border-bottom:1px solid var(--line);background:var(--panel2);
+  font-family:var(--mono);font-size:12.5px;flex-wrap:wrap}
+#hud[hidden]{display:none}
+#hud .room{color:var(--accent);letter-spacing:.06em}
+#hud .hero{display:flex;align-items:center;gap:8px;margin-left:auto}
+#hud .bar{width:110px}
+
+#screen{flex:1;min-height:0;padding:14px 16px 18px;overflow:auto;
+  font-family:var(--mono);font-size:clamp(11px,2.7vw,14.5px);line-height:1.38;tab-size:4}
+.ln{white-space:pre;min-height:1.38em}
+.ev{white-space:pre-wrap;display:flex;gap:.55em;align-items:baseline;padding:1px 0}
+.ic{flex:none;width:1.4em;text-align:center;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;font-size:.95em}
+.ev .tx{flex:1;min-width:0}
+.pending{color:var(--dim)}
+.sys{color:var(--dim);font-style:italic}
+
+/* rum och rubriker */
+.room{margin:14px 0 2px;color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:1.05em;
+  border-left:3px solid var(--accent);padding-left:10px;white-space:pre-wrap}
+.desc{color:var(--dim);font-style:italic;padding-left:13px;white-space:pre-wrap}
+.menuhead{margin-top:12px;color:var(--dim);font-size:.85em;letter-spacing:.14em;text-transform:uppercase;white-space:pre-wrap}
+.menuhead::before{content:"── "}
+.menuhead::after{content:" ──"}
+
+/* menyer: fälls ihop när man har valt */
+.menu{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:4px 0 2px;background:rgba(255,255,255,.015);
+  display:grid;grid-template-rows:1fr;transition:grid-template-rows .25s ease,opacity .25s,margin .25s,padding .25s,border-color .25s}
+.menu>div{overflow:hidden}
+.menu.done{grid-template-rows:0fr;opacity:0;margin:0;padding:0 10px;border-color:transparent}
+.opt{display:flex;gap:.6em;align-items:baseline;white-space:pre-wrap}
+.opt .key{color:var(--accent);font-weight:700;min-width:1.2em}
+.ask{color:var(--dim);font-size:.9em;margin-bottom:2px}
+.answer{color:var(--you);display:flex;gap:.55em;align-items:baseline;white-space:pre-wrap;margin:2px 0 4px}
+.answer .p{color:var(--dim)}
+
+/* strid */
+.hit .tx{color:var(--ink)}
+.hurt .tx{color:#ffb0a6}
+.miss .tx,.dodge .tx{color:var(--dim);font-style:italic}
+.dmg{display:inline-block;margin-left:.5em;padding:0 .45em;border-radius:4px;font-weight:700;font-size:.9em}
+.hit .dmg{background:rgba(233,178,94,.16);color:var(--accent)}
+.hurt .dmg{background:rgba(255,107,91,.18);color:var(--red)}
+.appear .tx{color:#ffcf9a;font-weight:700}
+.appear{animation:pop .35s ease-out}
+.win .tx{color:var(--ok);font-weight:700}
+.danger .tx{color:var(--red);font-weight:700}
+.say .who{font-weight:700;color:var(--ink)}
+.say .q{color:#e9d9b8;font-style:italic}
+.loot .tx{color:var(--accent)}
+.heal .tx{color:var(--ok)}
+.heal{animation:glow 1s ease-out}
+.good .tx{color:var(--ok)}
+.warn .tx{color:#e6c07a}
+.info .tx{color:var(--ink)}
+.eq .k{color:var(--dim);display:inline-block;min-width:6.5em}
+.echo{display:none}
+.big .tx{font-size:1.1em;font-weight:700;color:var(--accent)}
+
+/* hp-staplar */
+.hp{display:flex;align-items:center;gap:.7em;white-space:pre;padding:1px 0}
+.hp .name{min-width:9ch;color:var(--ink)}
+.bar{position:relative;flex:none;width:clamp(90px,24vw,180px);height:.8em;border-radius:99px;background:#232a33;overflow:visible}
+.bar .fill{position:absolute;inset:0 auto 0 0;border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.2,1),background-color .6s;
+  box-shadow:0 0 10px -2px currentColor}
+.bar .fill.g{background:#5fbf8a;color:#5fbf8a}.bar .fill.y{background:#e9b25e;color:#e9b25e}.bar .fill.r{background:#ff6b5b;color:#ff6b5b}
+.hp .num{color:var(--dim);font-size:.9em}
+.hp.dead .name{color:var(--dim);text-decoration:line-through}
+.float{position:absolute;right:-.2em;top:-1.1em;font-weight:700;font-size:.9em;pointer-events:none;animation:rise 1.1s ease-out forwards}
+.float.minus{color:var(--red)}.float.plus{color:var(--ok)}
+
+/* ASCII-bilder */
+.art{color:var(--art);margin:6px 0}
+.art .ln{animation:draw .35s ease-out backwards}
+.art.atk{color:var(--you);text-shadow:0 0 8px rgba(159,195,238,.35)}
+.art.atk .ln{animation:slash .32s cubic-bezier(.2,.9,.2,1) backwards}
+.art.foe{color:#ffa497;text-shadow:0 0 8px rgba(255,107,91,.3)}
+.art.foe .ln{animation:slashL .32s cubic-bezier(.2,.9,.2,1) backwards}
+.art.red{color:var(--red);text-shadow:0 0 12px rgba(255,107,91,.55);animation:glitch 1.2s steps(2) 2}
+.art.victory{color:#ffd27a;text-shadow:0 0 14px rgba(255,210,122,.55)}
+.art.title{color:var(--accent);text-shadow:0 0 16px rgba(233,178,94,.35)}
+
+/* effekter */
+#fx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+#fx .flash{position:absolute;inset:0;animation:flash .45s ease-out forwards}
+#fx .flash.red{background:radial-gradient(ellipse at center,transparent 35%,rgba(255,60,40,.38))}
+#fx .flash.amber{background:radial-gradient(ellipse at center,rgba(233,178,94,.10),transparent 60%)}
+#fx .flash.green{background:radial-gradient(ellipse at center,rgba(116,188,150,.16),transparent 65%)}
+#fx .bit{position:absolute;top:-20px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
+.shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
+.shake.hard{animation:shake .6s cubic-bezier(.36,.07,.19,.97)}
+
+@keyframes shake{
+  10%,90%{transform:translate(-2px,1px)} 20%,80%{transform:translate(4px,-2px)}
+  30%,50%,70%{transform:translate(-7px,2px)} 40%,60%{transform:translate(7px,-1px)}}
+@keyframes flash{from{opacity:1}to{opacity:0}}
+@keyframes draw{from{opacity:0;transform:translateY(5px)}}
+@keyframes slash{from{opacity:0;transform:translateX(-28px)}}
+@keyframes slashL{from{opacity:0;transform:translateX(28px)}}
+@keyframes pop{0%{transform:scale(.96);opacity:0}60%{transform:scale(1.02)}100%{transform:none}}
+@keyframes glow{from{background:rgba(116,188,150,.18)}to{background:transparent}}
+@keyframes rise{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-16px)}}
+@keyframes glitch{0%{transform:none}25%{transform:translate(-3px,0) skewX(-4deg)}50%{transform:translate(3px,0)}75%{transform:skewX(3deg)}100%{transform:none}}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@keyframes float{50%{transform:translateY(-6px)}}
+@keyframes blink{50%{opacity:0}}
+.cursor{display:inline-block;width:.55em;height:1.05em;vertical-align:-.15em;background:var(--accent);animation:blink 1s steps(1) infinite;margin-left:2px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  #fx{display:none}
+}
+
+#cover{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
   padding:24px 16px;text-align:center;background:color-mix(in srgb,var(--panel) 94%,transparent)}
 #cover[hidden]{display:none}
 #cover h2{margin:0;font-family:var(--mono);font-size:clamp(22px,6vw,34px);letter-spacing:.14em;color:var(--accent)}
 #cover p{margin:0;max-width:46ch;color:var(--dim);font-size:14px;line-height:1.5}
 #cover .msg{color:var(--ink)}
+#cover .feat{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:12.5px;color:var(--dim)}
+#cover .feat span{border:1px solid var(--line);border-radius:999px;padding:3px 10px}
 
 #chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px 0;background:var(--bg)}
 #chips:empty{display:none}
-#chips button{background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:6px 10px;font-family:var(--mono);font-size:13px}
-#chips button:hover{border-color:var(--accent)}
-#chips b{color:var(--accent);font-weight:700;margin-right:6px}
+#chips button{background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:6px 11px;font-family:var(--mono);font-size:13px;
+  display:flex;align-items:center;gap:6px;animation:draw .2s ease-out backwards;transition:border-color .15s,transform .1s}
+#chips button:hover{border-color:var(--accent);transform:translateY(-1px)}
+#chips button:active{transform:translateY(1px)}
+#chips b{color:var(--accent);font-weight:700}
+#chips .ic{width:auto}
 
 form{display:flex;gap:8px;padding:10px 16px 12px;background:var(--bg);border-top:1px solid var(--line)}
 form label{font-family:var(--mono);color:var(--accent);align-self:center}
@@ -62,6 +174,7 @@ form label{font-family:var(--mono);color:var(--accent);align-self:center}
 form .primary{padding:9px 16px;font-size:14px}
 footer{padding:6px 16px 10px;font-size:12px;color:var(--dim);display:flex;gap:12px;flex-wrap:wrap}
 footer a{color:var(--dim)}
+@media (max-width:560px){#chips{gap:5px;padding:6px 12px 0}#chips button{padding:4px 8px;font-size:12px}#hud{padding:6px 12px}#screen{padding:12px 12px 16px}form{padding:8px 12px 10px}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -73,12 +186,18 @@ footer a{color:var(--dim)}
   <button type="button" class="ghost" id="restart" hidden>Starta om</button>
 </header>
 
-<main>
-  <pre id="screen" aria-live="polite" aria-label="Spelets utskrift" tabindex="0"></pre>
+<main id="main">
+  <div id="hud" hidden>
+    <span class="room" id="hud-room">📍 –</span>
+    <span class="hero" id="hud-hero" hidden></span>
+  </div>
+  <div id="screen" role="log" aria-live="polite" aria-label="Spelets utskrift" tabindex="0"></div>
+  <div id="fx" aria-hidden="true"></div>
   <div id="cover">
     <img class="logo" src="/icon.svg" alt="Fångdjupets ikon: ett stenvalv med galler och Java-ånga">
     <h2>FÅNGDJUPET</h2>
     <p>Ta dig igenom skolan rum för rum och besegra Kapten Martin. Välj med siffror – eller klicka på knapparna under terminalen.</p>
+    <div class="feat"><span>⚔️ 4 rum</span><span>👹 7 fiender</span><span>📱 DoomScrolla</span><span>🔍 Gömda föremål</span><span>💾 Spara</span></div>
     <p class="msg" id="cover-msg" hidden></p>
     <button type="button" class="primary" id="play">Starta spelet</button>
   </div>
@@ -99,20 +218,30 @@ footer a{color:var(--dim)}
 
 <script>
 (() => {
-  const screen = document.getElementById("screen");
-  const cover = document.getElementById("cover");
-  const coverMsg = document.getElementById("cover-msg");
-  const play = document.getElementById("play");
-  const restart = document.getElementById("restart");
-  const form = document.getElementById("form");
-  const line = document.getElementById("line");
-  const sendBtn = document.getElementById("send");
-  const chips = document.getElementById("chips");
+  const $ = id => document.getElementById(id);
+  const screen = $("screen"), mainEl = $("main"), fx = $("fx");
+  const cover = $("cover"), coverMsg = $("cover-msg"), play = $("play"), restart = $("restart");
+  const form = $("form"), line = $("line"), sendBtn = $("send"), chips = $("chips");
+  const hud = $("hud"), hudRoom = $("hud-room"), hudHero = $("hud-hero");
+  const calm = matchMedia("(prefers-reduced-motion: reduce)");
 
   let session = null, pos = 0, generation = 0;
   let sinceInput = "";            // text sedan spelaren senast skickade något (för snabbvalen)
   let ansiHold = "";              // en färgkod som delats mellan två svar
-  let style = { red: false, bold: false };
+  let red = false;                // ANSI-röd på (GAME OVER)
+  let partial = "", partialRed = false, pendingEl = null;
+
+  // Läget för renderingen
+  let lastEl = null;              // senaste färdiga raden (för "=====" under rubriker)
+  let artBox = null, artIdx = 0;  // pågående ASCII-bild
+  let menuBox = null;             // pågående meny
+  let options = new Map();        // menyval → text, för svaret "› 🔮 Magi"
+  let attackMenu = false;         // senaste menyn var attackmenyn
+  let nextArt = "";               // vad nästa bild är: "atk" (hjälten valde) eller "foe" (bossen)
+  let heroName = null, expectHero = false, inFight = false;
+  const hpSeen = new Map();       // namn → senaste hp, för att se skada/läkning
+
+  const ROOMS = ["Skoldörren", "Kafferummet", "Korridoren och städskrubben", "Lektionssalen"];
 
   // Spelar-id i webbläsaren: samma id → samma sparfil på servern
   const playerId = (() => {
@@ -125,76 +254,338 @@ footer a{color:var(--dim)}
     } catch { return make(); }
   })();
 
-  // ---- utskrift ----
-  // Senaste händelsen ska alltid synas: scrolla till botten nu och efter nästa omritning
-  // (snabbvalsknapparna dyker upp under terminalen och gör den lägre).
+  // ---------- ikoner ----------
+  const OPTION_ICONS = [
+    [/Strid/, "⚔️"], [/Gå till/, "🚪"], [/utrustning/, "🎒"], [/Spara/, "💾"], [/Leta/, "🔍"], [/Avsluta/, "⏏️"],
+    [/Starta nytt/, "✨"], [/Fortsätt/, "▶️"], [/Närstrid/, "🗡️"], [/Magi/, "🔮"], [/Avstånd/, "🏹"],
+    [/DoomScroll/i, "📱"], [/JavaQuiz/, "❓"], [/StackOverflow/, "📚"], [/Dela skärm/, "🖥️"]];
+  const iconFor = label => (OPTION_ICONS.find(([re]) => re.test(label)) || [, "•"])[1];
+
+  // ---------- scroll ----------
   function scrollToEnd() {
     screen.scrollTop = screen.scrollHeight;
     requestAnimationFrame(() => { screen.scrollTop = screen.scrollHeight; });
   }
-  // Ändras terminalens storlek (knapparna, mobilens tangentbord, fönstret) – stanna på botten
   if ("ResizeObserver" in window) new ResizeObserver(scrollToEnd).observe(screen);
 
-  function append(text, cls) {
-    const span = document.createElement("span");
-    if (cls) span.className = cls;
-    span.textContent = text;
-    screen.appendChild(span);
-    while (screen.textContent.length > 300000 && screen.firstChild) screen.removeChild(screen.firstChild);
-    scrollToEnd();
+  // ---------- byggstenar ----------
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function put(node, parent) {
+    (parent || screen).appendChild(node);
+    while (screen.childElementCount > 1600) screen.firstElementChild.remove();
+    lastEl = node;
+    return node;
+  }
+  function ev(cls, icon, ...parts) {
+    const row = el("div", "ev " + cls);
+    row.append(el("span", "ic", icon));
+    const tx = el("span", "tx");
+    for (const p of parts) tx.append(p);
+    row.append(tx);
+    return put(row);
+  }
+  function sysLine(text) { closeBlocks(); put(el("div", "ln sys", text)); scrollToEnd(); }
+  function closeBlocks() { artBox = null; }
+
+  // ---------- effekter ----------
+  function restartAnim(node, cls) {
+    node.classList.remove(cls);
+    void node.offsetWidth;
+    node.classList.add(cls);
+  }
+  function shake(hard) {
+    if (calm.matches) return;
+    mainEl.classList.remove("shake", "hard");
+    void mainEl.offsetWidth;
+    mainEl.classList.add("shake");
+    if (hard) mainEl.classList.add("hard");
+    navigator.vibrate?.(hard ? [60, 40, 80] : 50);
+  }
+  function flash(color) {
+    if (calm.matches) return;
+    const f = el("div", "flash " + color);
+    fx.append(f);
+    setTimeout(() => f.remove(), 500);
+  }
+  function confetti() {
+    if (calm.matches) return;
+    const colors = ["#e9b25e", "#ffd27a", "#74bc96", "#9fc3ee", "#ff6b5b", "#b79cff"];
+    for (let i = 0; i < 70; i++) {
+      const b = el("span", "bit");
+      b.style.left = Math.random() * 100 + "%";
+      b.style.background = colors[i % colors.length];
+      b.style.animationDuration = 1.8 + Math.random() * 1.8 + "s";
+      b.style.animationDelay = Math.random() * .6 + "s";
+      fx.append(b);
+      setTimeout(() => b.remove(), 4500);
+    }
   }
 
-  // Spelets GAME OVER är röd med ANSI-koder (\x1b[31m … \x1b[0m) – de blir färg här
-  function appendAnsi(text) {
-    text = (ansiHold + text).replace(/\r\n?/g, "\n");   // Windows-radslut när servern körs lokalt
+  // ---------- hp-stapel ----------
+  function barNode(cur, max) {
+    const bar = el("span", "bar");
+    const fill = el("span", "fill");
+    const pct = max > 0 ? cur / max : 0;
+    fill.classList.add(pct > .5 ? "g" : pct > .25 ? "y" : "r");
+    bar.append(fill);
+    return { bar, fill, pct };
+  }
+  function hpLine(name, cur, max) {
+    const prev = hpSeen.has(name) ? hpSeen.get(name) : max;
+    hpSeen.set(name, cur);
+    const row = el("div", "hp" + (cur === 0 ? " dead" : ""));
+    const { bar, fill, pct } = barNode(cur, max);
+    fill.style.width = (max > 0 ? prev / max * 100 : 0) + "%";
+    row.append(el("span", "ic", cur === 0 ? "💀" : name === heroName ? "❤️" : "🖤"), el("span", "name", name), bar,
+      el("span", "num", cur + "/" + max));
+    put(row);
+    requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = pct * 100 + "%"; }));
+    const diff = cur - prev;
+    if (diff) {
+      const f = el("span", "float " + (diff < 0 ? "minus" : "plus"), (diff < 0 ? "−" : "+") + Math.abs(diff));
+      bar.append(f);
+      setTimeout(() => f.remove(), 1200);
+    }
+    if (name === heroName) {
+      updateHud(cur, max);
+      if (diff < 0) { shake(cur === 0 || -diff >= 6); flash("red"); }
+    }
+  }
+  function updateHud(cur, max) {
+    hudHero.hidden = false;
+    hudHero.textContent = "";
+    const { bar, fill, pct } = barNode(cur, max);
+    fill.style.width = pct * 100 + "%";
+    hudHero.append(el("span", null, "❤️ " + heroName), bar, el("span", "num", cur + "/" + max));
+  }
+
+  // ---------- en färdig rad från spelet ----------
+  function renderLine(t, isRed) {
+    // ASCII-bild: spelets vanliga rader börjar aldrig med blanksteg, bilderna gör det
+    if (/^\s/.test(t) && t.trim() || (artBox && !t.trim())) {
+      if (!artBox) {
+        const kind = nextArt || (inFight ? "foe" : "");
+        artBox = put(el("div", "art" + (kind ? " " + kind : "") + (isRed ? " red" : "")));
+        artIdx = 0;
+        nextArt = "";
+        if (isRed) { shake(true); flash("red"); }
+      }
+      const row = el("div", "ln", t);
+      row.style.animationDelay = Math.min(artIdx++ * 32, 600) + "ms";
+      artBox.append(row);
+      if (artIdx === 1 && screen.querySelectorAll(".art").length === 1) artBox.classList.add("title");   // första bilden: FANGDJUPET
+      if (/V A N N/.test(t)) { artBox.classList.add("victory"); confetti(); flash("green"); }
+      return;
+    }
+    closeBlocks();
+    if (!t.trim()) { put(el("div", "ln")); return; }
+
+    // "=====" under en rubrik: rubriken blir menyrubrik
+    if (/^=+$/.test(t)) {
+      if (lastEl && lastEl.classList.contains("room")) lastEl.className = "menuhead";
+      else if (lastEl) lastEl.classList.add("menuhead");
+      return;
+    }
+
+    // Meny: "Välj attack ..." och "1. Strid mot ..."
+    let m;
+    if (/^Välj attack/.test(t)) {
+      menuBox = openMenu(); attackMenu = true;
+      menuBox.firstChild.append(el("div", "ask", "🎯 Välj attack"));
+      return;
+    }
+    if ((m = t.match(/^([0-9]+|e)\.\s+(.+)$/))) {
+      if (!menuBox) { menuBox = openMenu(); attackMenu = false; }
+      options.set(m[1], m[2]);
+      const row = el("div", "opt");
+      row.append(el("span", "ic", iconFor(m[2])), el("span", "key", m[1]), el("span", null, m[2]));
+      menuBox.firstChild.append(row);
+      lastEl = row;
+      return;
+    }
+    menuBox = null;
+
+    // Hp-mätaren "Troll  [######----] 6/10"
+    if ((m = t.match(/^(.+?)\s+\[[#-]+\]\s+(\d+)\/(\d+)\s*$/))) {
+      if (expectHero) { heroName = m[1]; expectHero = false; }
+      hpLine(m[1], +m[2], +m[3]);
+      return;
+    }
+
+    // Striden
+    if ((m = t.match(/^Hero: (.+) skada: (\d+)$/))) {
+      inFight = true;
+      ev("hit", "⚔️", m[1], el("span", "dmg", "−" + m[2]));
+      flash("amber");
+      return;
+    }
+    if (/^Hero: /.test(t)) { inFight = true; ev("miss", "💨", t.slice(6)); return; }
+    if ((m = t.match(/^Enemy: (.+) skada: (\d+)$/))) {
+      inFight = true; expectHero = true;
+      ev("hurt", "💥", m[1], el("span", "dmg", "−" + m[2]));
+      return;
+    }
+    if (/^Enemy: /.test(t)) { inFight = true; expectHero = true; ev("dodge", "🛡️", t.slice(7)); return; }
+    if (/ vinner Fångdjupet!$/.test(t)) { inFight = false; ev("win big", "👑", t); return; }
+    if (/ vinner mot .*!$/.test(t)) { inFight = false; ev("win", "🏆", t); return; }
+    if ((m = t.match(/^Fiende (.+) dyker upp!$/))) { ev("appear", "👹", t); return; }
+    if (/^Men vänta\.\.\./.test(t)) { ev("appear", "❗", t); shake(false); return; }
+    if (/blir arg!/.test(t)) { ev("danger", "😡", t); shake(true); flash("red"); return; }
+    if (/besegrades av|dog av sin egen attack/.test(t)) { inFight = false; ev("danger", "☠️", t); return; }
+
+    // Repliker: Trollkarl: "Thou shall not pass!"
+    if ((m = t.match(/^([^:"]{1,30}): "(.*)"$/))) {
+      ev("say", "💬", el("span", "who", m[1] + " "), el("span", "q", "“" + m[2] + "”"));
+      return;
+    }
+
+    // Rum
+    if (ROOMS.includes(t) || t === "Fangdjupet") {
+      put(el("div", "room", (t === "Fangdjupet" ? "🏰 " : "📍 ") + t));
+      if (ROOMS.includes(t)) { hud.hidden = false; hudRoom.textContent = "📍 " + t; }
+      return;
+    }
+    if (/^(Du står utanför|Det luktar|Korridoren känns|Du har nått fram)/.test(t)) { put(el("div", "desc", t)); return; }
+
+    // Utrustning
+    if ((m = t.match(/^(Vapen|Rustning|Attack|Java-boken): (.+)$/))) {
+      const icons = { Vapen: "🗡️", Rustning: "🛡️", Attack: "🎯", "Java-boken": "📖" };
+      ev("eq info", icons[m[1]], el("span", "k", m[1]), m[2]);
+      return;
+    }
+
+    if ((m = t.match(/^Välkommen tillbaka, (.+)!$/))) heroName = m[1];
+
+    // Allt annat: en ikon efter vad raden handlar om
+    const RULES = [
+      [/^(Visa hjältens utrustning|Starta nytt äventyr|Fortsätt sparat äventyr)\.$/, "echo", ""],
+      [/^Äventyret börjar!/, "big", "🗺️"],
+      [/^Välkommen tillbaka/, "big", "👋"],   // namnet tas i renderLine
+      [/\(\+\d+ hp\)/, "heal", "☕"],
+      [/^Du tar på dig/, "loot", "🛡️"],
+      [/^Du har nu .* i handen/, "loot", "🗡️"],
+      [/^Du hittar en Java-bok/, "loot", "📖"],
+      [/^Du hittar inget/, "warn", "🤷"],
+      [/^Du hittar/, "loot", "🎁"],
+      [/^Du letar/, "info", "🔍"],
+      [/^Mot Martin hjälper bara kunskap/, "info", "🧠"],
+      [/^Äventyret är sparat/, "good", "💾"],
+      [/^Fortsätter du senare/, "info", "ℹ️"],
+      [/står i vägen/, "warn", "🚧"],
+      [/^(Ogiltigt val|Starta ett äventyr först|Det finns ingen|Det finns inga|Det finns inget|Kunde inte|Sparfilen)/, "warn", "⚠️"],
+      [/^Frida dyker upp/, "appear", "🧚"],
+      [/^Tack för att du spelade/, "big", "👋"],
+      [/^Välj 1 för att börja om/, "info", "🔁"],
+      [/dricker|tar en/, "heal", "☕"],
+      [/kaffe|kanelbulle|Kannan/, "info", "☕"]];
+    const rule = RULES.find(([re]) => re.test(t));
+    if (rule) {
+      const row = ev(rule[1], rule[2], t);
+      if (rule[1] === "heal") flash("green");
+      if (rule[1] === "loot") restartAnim(row, "appear");
+      return;
+    }
+    ev("info", "", t);
+  }
+
+  function openMenu() {
+    const box = el("div", "menu");
+    box.append(el("div"));
+    options = new Map();
+    return put(box);
+  }
+
+  // Raden som väntar på svar ("Ditt val: ") visas längst ner med en blinkande markör
+  function showPending() {
+    if (pendingEl) pendingEl.remove();
+    pendingEl = null;
+    if (!partial) return;
+    pendingEl = el("div", "ln pending", partial);
+    pendingEl.append(el("span", "cursor"));
+    screen.appendChild(pendingEl);
+  }
+
+  // Spelets GAME OVER är röd med ANSI-koder (\x1b[31m … \x1b[0m)
+  function feed(text) {
+    text = (ansiHold + text).replace(/\r\n?/g, "\n");
     ansiHold = "";
     const cut = text.match(/\x1b(\[[0-9;]*)?$/);
     if (cut) { ansiHold = cut[0]; text = text.slice(0, -cut[0].length); }
     const parts = text.split(/\x1b\[([0-9;]*)m/);
     for (let i = 0; i < parts.length; i++) {
-      if (i % 2 === 0) {
-        if (parts[i]) append(parts[i], [style.red && "red", style.bold && "bold"].filter(Boolean).join(" "));
-      } else {
+      if (i % 2 === 1) {
         for (const code of (parts[i] || "0").split(";")) {
-          if (code === "0" || code === "") style = { red: false, bold: false };
-          else if (code === "1") style.bold = true;
-          else if (code === "31" || code === "91") style.red = true;
-          else if (code === "39") style.red = false;
+          if (code === "0" || code === "" || code === "39") red = false;
+          else if (code === "31" || code === "91") red = true;
+        }
+        continue;
+      }
+      const pieces = parts[i].split("\n");
+      for (let j = 0; j < pieces.length; j++) {
+        if (pieces[j]) { partial += pieces[j]; partialRed ||= red; }
+        if (j < pieces.length - 1) {
+          if (pendingEl) { pendingEl.remove(); pendingEl = null; }
+          renderLine(partial, partialRed);
+          partial = ""; partialRed = red;
         }
       }
     }
+    showPending();
     sinceInput += text.replace(/\x1b\[[0-9;]*m/g, "");
     updateChips();
     scrollToEnd();
   }
 
-  // ---- snabbval: menyraderna "1. Strid mot …" blir knappar ----
+  // Spelaren svarade: menyn fälls ihop och svaret visas som "› 🔮 Magi"
+  function answered(value) {
+    if (pendingEl) { pendingEl.remove(); pendingEl = null; }
+    const prompt = partial;
+    partial = ""; partialRed = false;
+    const isChoice = /(Välj ett alternativ|Ditt val)/.test(prompt);
+    const row = el("div", "answer");
+    if (isChoice) {
+      const label = value === "" ? "Behåll attacken" : options.get(value.trim());
+      row.append(el("span", "ic", label ? (value === "" ? "↩️" : iconFor(label)) : "›"), el("span", null, label || value || "(Enter)"));
+      document.querySelectorAll(".menu:not(.done)").forEach(b => b.classList.add("done"));
+      if (attackMenu && value !== "") nextArt = "atk";
+    } else {
+      row.append(el("span", "p", prompt.trim()), el("span", null, value));
+      if (/heter hjälten/.test(prompt)) heroName = value.trim() || "Hjälten";   // samma regel som spelet
+    }
+    put(row);
+    menuBox = null; artBox = null;
+    scrollToEnd();
+  }
+
+  // ---------- snabbval: menyraderna blir knappar ----------
   function updateChips() {
     chips.textContent = "";
     if (!session) return;
     const t = sinceInput;
-    const waiting = /(Välj ett alternativ|Ditt val|Välj attack)[^\n]*:\s*$/.test(t);
-    if (!waiting) return;
+    if (!/(Välj ett alternativ|Ditt val|Välj attack)[^\n]*:\s*$/.test(t)) return;
     const seen = new Set();
     for (const m of t.matchAll(/^\s*([0-9]+|e)\.\s+(.+?)\s*$/gm)) {
       if (seen.has(m[1])) continue;
       seen.add(m[1]);
-      chip(m[1], m[2], m[1]);
+      chip(m[1], m[2], m[1], iconFor(m[2]));
     }
-    if (/Enter = behåll/.test(t)) chip("↵", "Behåll attacken", "");
+    if (/Enter = behåll/.test(t)) chip("↵", "Behåll attacken", "", "↩️");
   }
-
-  function chip(key, label, value) {
-    const b = document.createElement("button");
+  function chip(key, label, value, icon) {
+    const b = el("button");
     b.type = "button";
-    const k = document.createElement("b");
-    k.textContent = key;
-    b.append(k, label);
+    b.style.animationDelay = chips.childElementCount * 30 + "ms";
+    b.append(el("span", "ic", icon), el("b", null, key), label);
     b.addEventListener("click", () => submit(value));
     chips.appendChild(b);
   }
 
-  // ---- server ----
+  // ---------- server ----------
   async function api(path, opts = {}) {
     const r = await fetch(path, { cache: "no-store", ...opts });
     let body = {};
@@ -232,6 +623,15 @@ footer a{color:var(--dim)}
     return false;
   }
 
+  function resetView() {
+    pos = 0; sinceInput = ""; ansiHold = ""; red = false;
+    partial = ""; partialRed = false; pendingEl = null;
+    lastEl = null; artBox = null; menuBox = null; options = new Map(); attackMenu = false; nextArt = "";
+    heroName = null; expectHero = false; inFight = false; hpSeen.clear();
+    screen.textContent = "";
+    hud.hidden = true; hudHero.hidden = true;
+  }
+
   async function startGame() {
     play.disabled = true;
     coverMsg.hidden = false;
@@ -247,8 +647,7 @@ footer a{color:var(--dim)}
     if (status !== 200) { showCover("Spelet kunde inte startas. Försök igen.", "Försök igen"); return; }
 
     session = body.session;
-    pos = 0; sinceInput = ""; ansiHold = ""; style = { red: false, bold: false };
-    screen.textContent = "";
+    resetView();
     cover.hidden = true;
     setPlaying(true);
     poll(++generation);
@@ -266,7 +665,7 @@ footer a{color:var(--dim)}
       if (gen !== generation) return;
       if (res.status === 404) { ended("Spelet stängdes efter en stund utan aktivitet."); return; }
       if (res.status !== 200) { await new Promise(r => setTimeout(r, 1500)); continue; }
-      if (res.body.text) appendAnsi(res.body.text);
+      if (res.body.text) feed(res.body.text);
       pos = res.body.next;
       if (res.body.ended) { ended("Spelet är slut."); return; }
     }
@@ -277,7 +676,8 @@ footer a{color:var(--dim)}
     generation++;
     setPlaying(false);
     restart.hidden = true;
-    append("\n" + message + "\n", "sys");
+    if (pendingEl) { pendingEl.remove(); pendingEl = null; }
+    sysLine(message);
     showCover(message + " Ditt sparade äventyr finns kvar – välj 2 i huvudmenyn för att fortsätta.", "Spela igen");
   }
 
@@ -290,10 +690,9 @@ footer a{color:var(--dim)}
 
   async function submit(value) {
     if (!session) return;
-    append(value + "\n", "you");
+    answered(value);
     sinceInput = "";
     chips.textContent = "";
-    scrollToEnd();
     line.value = "";
     line.focus({ preventScroll: true });
     try {
@@ -302,7 +701,7 @@ footer a{color:var(--dim)}
       });
       if (status !== 200) ended("Spelet stängdes efter en stund utan aktivitet.");
     } catch {
-      append("(kunde inte skicka – kontrollera anslutningen)\n", "sys");
+      sysLine("(kunde inte skicka – kontrollera anslutningen)");
     }
   }
 
@@ -310,6 +709,7 @@ footer a{color:var(--dim)}
   play.addEventListener("click", startGame);
   restart.addEventListener("click", startGame);
   screen.addEventListener("click", () => { if (!line.disabled && !getSelection().toString()) line.focus({ preventScroll: true }); });
+  mainEl.addEventListener("animationend", e => { if (e.target === mainEl) mainEl.classList.remove("shake", "hard"); });
   window.addEventListener("pagehide", () => {
     if (session) navigator.sendBeacon("/api/stop?session=" + encodeURIComponent(session));
   });
