@@ -561,7 +561,7 @@ footer a{color:var(--dim)}
     if (/ vinner mot .*!$/.test(t)) { inFight = false; ev("win", "🏆", t); return; }
     if ((m = t.match(/^Fiende (.+) dyker upp!$/))) { ev("appear", "👹", t); return; }
     if (/^Men vänta\.\.\./.test(t)) { ev("appear", "❗", t); shake(false); return; }
-    if (/blir arg!/.test(t)) { ev("danger", "😡", t); shake(true); flash("red"); return; }
+    if (/blir arg!|skrattar elakt/.test(t)) { ev("danger", /skrattar/.test(t) ? "😈" : "😡", t); shake(true); flash("red"); return; }
     if (/besegrades av|dog av sin egen attack/.test(t)) { inFight = false; ev("danger", "☠️", t); return; }
 
     // Repliker: Trollkarl: "Thou shall not pass!"
@@ -601,7 +601,8 @@ footer a{color:var(--dim)}
       [/^Du är nu inlåst i Fångdjupet/, "danger", "⛓️"],
       [/^Här ligger:/, "loot hl", "✨"],
       [/^Du plockar upp:/, "loot", "✋"],
-      [/^Du låter .* ligga kvar/, "miss", "🚫"],
+      [/^Du låter .* (ligga|stå) kvar/, "miss", "🚫"],
+      [/skrattar elakt/, "danger", "😈"],
       [/^Du går till/, "info", "🚶"],
       [/^(Du stannar i|Du är redan i)/, "info", "🧍"],
       [/ är låst\./, "warn", "🔒"],
@@ -683,7 +684,10 @@ footer a{color:var(--dim)}
     input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submit(input.value); } });
     pendingEl.append(input);
     if (/\(j\/n\):\s*$/.test(partial)) {
-      for (const [label, value, icon] of [["Ja, plocka upp", "j", "✋"], ["Nej, lämna kvar", "n", "🚫"]]) {
+      const food = /^\s*Ta /.test(partial);   // kaffet eller kanelbullen: ta den nu, eller låt den stå
+      for (const [label, value, icon] of food
+          ? [["Ja, ta den", "j", "☕"], ["Nej, låt den stå", "n", "🚫"]]
+          : [["Ja, plocka upp", "j", "✋"], ["Nej, lämna kvar", "n", "🚫"]]) {
         const b = el("button", "jn" + (value === "j" ? " yes" : ""));
         b.type = "button";
         b.append(el("span", "ic", icon), label);
@@ -758,7 +762,9 @@ footer a{color:var(--dim)}
     const row = el("div", "answer");
     if (isPick) {
       const yes = /^(j|ja|y|yes)$/i.test(value.trim());   // samma regel som spelet (wantsIt)
-      row.append(el("span", "ic", yes ? "✋" : "🚫"), el("span", null, yes ? "Plocka upp" : "Lämna kvar"));
+      const food = /^\s*Ta /.test(prompt);
+      row.append(el("span", "ic", yes ? (food ? "☕" : "✋") : "🚫"),
+        el("span", null, yes ? (food ? "Ta den" : "Plocka upp") : (food ? "Låt den stå" : "Lämna kvar")));
     } else if (isChoice) {
       const stay = /Välj rum/.test(prompt);
       let label = value === "" ? (stay ? "Stanna kvar" : "Behåll attacken") : options.get(value.trim());
