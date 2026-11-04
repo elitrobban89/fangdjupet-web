@@ -898,6 +898,8 @@ footer a{color:var(--dim)}
         fightSong = "bossFast"; Sound.music("bossFast");
         titleCard("FAS 2 · UTTERLY EXPLAINED", "boss"); shake(true); flash("red");
       }
+      if (/PERSISTENTLY EXPLAINED/.test(t)) { titleCard("PERSISTENTLY EXPLAINED", "boss"); shake(true); }
+      if (/ANGRILY EXPLAINED/.test(t)) { titleCard("ANGRILY EXPLAINED", "boss"); shake(true); flash("red"); }
       if (/S K O L A/.test(t)) artBox.dataset.school = "1";   // skolbyggnaden ovanför huvudmenyn
       return;
     }
