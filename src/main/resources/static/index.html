@@ -626,7 +626,7 @@ footer a{color:var(--dim)}
     for (let i = 0; i < 14; i++) { const s = sprite("★", "spark gold", 1100); s.style.setProperty("--a", i * 26 + "deg"); }
   }
   // ---- fler animationer ----
-  const ITEM_ICONS = [[/Vante/, "🧤"], [/Brasklapp/, "📝"], [/Pilbåge|båge/i, "🏹"], [/Trollstav|stav/i, "🪄"], [/svärd|Svärd/, "🗡️"], [/Städrustning|rustning|sköld/i, "🛡️"],
+  const ITEM_ICONS = [[/Ullvantar/, "🧤"], [/Brasklapp/, "📝"], [/Pilbåge|båge/i, "🏹"], [/Trollstav|stav/i, "🪄"], [/svärd|Svärd/, "🗡️"], [/Städrustning|rustning|sköld/i, "🛡️"],
     [/Stressboll/i, "🎾"], [/Java-bok/i, "📖"], [/kaffe|Kaffe/, "☕"], [/kanelbulle/i, "🥐"]];
   const itemIcon = t => (ITEM_ICONS.find(([re]) => re.test(t)) || [0, "🎁"])[1];
   function lootFx(icon) {
@@ -1111,6 +1111,7 @@ footer a{color:var(--dim)}
         shake(true); flash("red"); Sound.sfx("slam");
         if (mapState.length) showMap(mapState.map((s, i) => i === 0 ? "#" : s));
       }
+      if (/^Du tar på dig Ullvantar/.test(t)) Sound.sfx("secret");   // ullvantarna är hemligheten vid dörren
       if (rule[1].startsWith("loot")) restartAnim(row, "appear");
       return;
     }

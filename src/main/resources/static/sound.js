@@ -483,6 +483,16 @@
       splay(bang(0.9, 30, [[700, 0.03, 1], [1500, 0.02, 0.6]], 3), t + 1.1, 0.8);
       duck(t, 1.9);
     },
+    // Något hemligt är hittat: en egen gåtslinga som går upp i sicksack och landar i ett mystiskt ackord
+    secret(t) {
+      const at = t + 0.35;
+      [0, 7, 3, 10, 5, 12, 8, 15].forEach((d, i) => {
+        tone("triangle", freq(67 + d), at + i * 0.11, 0.2, 0.07, sfxBus);
+        tone("square", freq(79 + d), at + i * 0.11, 0.07, 0.015, sfxBus, { lowpass: 2600 });
+      });
+      [15, 19, 22].forEach(d => tone("triangle", freq(67 + d), at + 0.92, 0.9, 0.05, sfxBus, { vibrato: 5, depth: 10 }));
+      duck(at, 1.6);
+    },
     // ---- StädHäxan: hon kraxar ----
     croak(t) {
       const twice = Math.random() < 0.5;
