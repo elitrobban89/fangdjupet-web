@@ -61,10 +61,8 @@ java -cp target/classes se.elitrobban.fangdjupet.WebServer
    webbtjänst som bygger med `Dockerfile`. (Eller **New → Web Service → Docker** för hand.)
 3. Render ger en adress, t.ex. `https://fangdjupet.onrender.com`. Öppna den och tryck **Starta spelet**.
 
-Docker-bygget hämtar spelet direkt från grupprepot, grenen i `ARG GAME_REF` i `Dockerfile`.
-**När #16, #18, #20, #21 och #22 är mergade: byt `GAME_REF` till `main`** – grenen `feature/rumskarta`
-tas bort vid merge, och då går bygget inte längre. Kör sedan **Manual Deploy → Clear build cache & deploy**
-när grupprepot har ändrats.
+Docker-bygget hämtar spelet direkt från grupprepot, grenen i `ARG GAME_REF` i `Dockerfile` (`main`).
+Kör **Manual Deploy → Clear build cache & deploy** när grupprepot har ändrats.
 
 | Miljövariabel | Standard | Vad |
 |---|---|---|

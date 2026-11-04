@@ -1031,8 +1031,8 @@ footer a{color:var(--dim)}
     if (/^(Du står utanför|Det luktar|Korridoren känns|Du har nått fram)/.test(t)) { put(el("div", "desc", t)); return; }
 
     // Utrustning
-    if ((m = t.match(/^(Vapen|Rustning|Attack|Java-boken|Stressboll): (.+)$/))) {
-      const icons = { Vapen: "🗡️", Rustning: "🛡️", Attack: "🎯", "Java-boken": "📖", Stressboll: "🎾" };
+    if ((m = t.match(/^(Vapen|Rustning|Attack|Java-boken|Stressboll|Ryggsäck): (.+)$/))) {
+      const icons = { Vapen: "🗡️", Rustning: "🛡️", Attack: "🎯", "Java-boken": "📖", Stressboll: "🎾", Ryggsäck: "🎒" };
       ev("eq info", icons[m[1]], el("span", "k", m[1]), m[2]);
       return;
     }
