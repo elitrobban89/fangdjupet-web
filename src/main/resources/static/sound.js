@@ -57,7 +57,7 @@
   };
   // Korta slingor som spelas en gång
   const JINGLES = {
-    win:  { scale: "yo", root: 67, bpm: 180, lead: "square", melody: "0 2 4 5 7 _ _ _", bass: "-5 _ _ _ -3 _ _ _" },
+    win:  { scale: "yo", root: 67, bpm: 180, lead: "square", vol: 0.45, bassVol: 0.45, melody: "0 2 4 5 7 _ _ _", bass: "-5 _ _ _ -3 _ _ _" },
     final:{ scale: "yo", root: 67, bpm: 150, lead: "square", melody: "0 2 4 5 4 5 7 _ 7 9 10 _ _ _ _ _", bass: "-5 _ -3 _ -4 _ -5 _ -5 _ -5 _ _ _ _ _" },
     lose: { scale: "insen", root: 57, bpm: 90, lead: "sawtooth", melody: "5 4 3 2 1 _ 0 _ _ _ . .", bass: "-5 _ _ _ -6 _ _ _ -10 _ _ _" }
   };
@@ -180,7 +180,7 @@
     if (b !== "_" && b !== ".") {
       const f = freq(pitch(s, +b)), dur = len(bas) * sd * 0.9;
       if (s.sticky) tone("sawtooth", f, at, dur, 0.2, musicBus, { lowpass: 900, lowpassTo: 160, q: 9 });   // squelch
-      else tone("triangle", f, at, dur, 0.28, musicBus);
+      else tone("triangle", f, at, dur, 0.28 * (s.bassVol || 1), musicBus);
     }
     if (drm) drum(drm[i % drm.length], at, musicBus);
   }
@@ -505,7 +505,7 @@
     },
     croakDie(t) {
       splay(croakData(1.0, 115, 26), t, 0.6, CROAK_VOL);
-      tone("sine", 120, t + 1, 0.2, 0.4, sfxBus, { from: 700, glide: 0.12 });
+      tone("sine", 120, t + 1, 0.2, 0.2, sfxBus, { from: 700, glide: 0.12 });
       duck(t, 1.1);
     },
     alert(t) { tone("square", freq(81), t, 0.08, 0.12, sfxBus); tone("square", freq(74), t + 0.09, 0.12, 0.12, sfxBus); },
