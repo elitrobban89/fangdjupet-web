@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,6 +71,16 @@ public final class WebServer {
                 content.put(file.name(), in.readAllBytes());
             }
         }
+        content.put("index.html", withSoundVersion(content.get("index.html"), content.get("sound.js")));
+    }
+
+    // Sidan cachas inte, men sound.js sparas ett dygn. Därför pekar sidan på filen med en kontrollsumma:
+    // ändras ljuden får adressen en ny summa, och alla spelare hämtar den nya filen direkt.
+    private static byte[] withSoundVersion(byte[] page, byte[] sound) {
+        String version = Integer.toHexString(Arrays.hashCode(sound));
+        return new String(page, UTF_8)
+                .replace("src=\"/sound.js\"", "src=\"/sound.js?v=" + version + "\"")
+                .getBytes(UTF_8);
     }
 
     public static void main(String[] args) throws IOException {
