@@ -449,7 +449,7 @@ footer a{color:var(--dim)}
   soundBtn.addEventListener("click", () => { Sound.unlock(); Sound.toggle(); showSound(); Sound.music(inFight ? fightSong : roomSong); });
   let fightSong = "battle";
   // Varje fiende låter på sitt sätt (samma som konsolspelets SoundListener.enemySound)
-  const enemySound = t => /^Enemy: Trollkarl/.test(t) ? "zap" : /^Enemy: Troll/.test(t) ? "club"
+  const enemySound = t => /^Enemy: Entrédörren/.test(t) ? "doorSlap" : /^Enemy: Trollkarl/.test(t) ? "zap" : /^Enemy: Troll/.test(t) ? "club"
     : /tvättsvamp/.test(t) ? "splat" : /Svinto/.test(t) ? "hiss" : /kemikalier/.test(t) ? "fizz"
     : /^Enemy: Lektor Martin/.test(t) ? "blah" : "hurt";
   const attackSound = () => /Magi/.test(heroAttack) ? "magic" : /Avstånd/.test(heroAttack) ? "shoot"
@@ -626,7 +626,7 @@ footer a{color:var(--dim)}
     for (let i = 0; i < 14; i++) { const s = sprite("★", "spark gold", 1100); s.style.setProperty("--a", i * 26 + "deg"); }
   }
   // ---- fler animationer ----
-  const ITEM_ICONS = [[/Pilbåge|båge/i, "🏹"], [/Trollstav|stav/i, "🪄"], [/svärd|Svärd/, "🗡️"], [/Städrustning|rustning|sköld/i, "🛡️"],
+  const ITEM_ICONS = [[/Vante/, "🧤"], [/Brasklapp/, "📝"], [/Pilbåge|båge/i, "🏹"], [/Trollstav|stav/i, "🪄"], [/svärd|Svärd/, "🗡️"], [/Städrustning|rustning|sköld/i, "🛡️"],
     [/Stressboll/i, "🎾"], [/Java-bok/i, "📖"], [/kaffe|Kaffe/, "☕"], [/kanelbulle/i, "🥐"]];
   const itemIcon = t => (ITEM_ICONS.find(([re]) => re.test(t)) || [0, "🎁"])[1];
   function lootFx(icon) {
@@ -968,7 +968,10 @@ footer a{color:var(--dim)}
     if ((m = t.match(/^Hero: (.+) skada: (\d+)$/))) {
       inFight = true;
       const kind = / citerar /.test(t) ? "page" : /kastar stressbollen på/.test(t) ? "boing" : attackSound();
-      Sound.sfx(kind); attackFx(kind); bigNumber("−" + m[2], "dmg");
+      const dropTable = /DROP TABLE/.test(t);   // Fridas brasklapp: golvet under Martin ger vika
+      Sound.sfx(dropTable ? "dropTable" : kind); attackFx(kind); bigNumber("−" + m[2], "dmg");
+      if (dropTable) { titleCard("DROP TABLE", "boss"); shake(true); flash("red"); }
+      if (/Entrédörren/.test(t)) Sound.sfx("doorHit");
       ev("hit", "⚔️", m[1], el("span", "dmg", "−" + m[2]));
       flash("amber");
       return;
@@ -992,26 +995,27 @@ footer a{color:var(--dim)}
     if ((m = t.match(/^Enemy: (.+) skada: (\d+)$/))) {
       inFight = true; expectHero = true;
       Sound.sfx(enemySound(t)); impactFx(enemySound(t)); bigNumber("−" + m[2], "hurt");
+      if (/^Enemy: StädHäxan/.test(t)) Sound.sfx("croak");
       ev("hurt", "💥", m[1], el("span", "dmg", "−" + m[2]));
       return;
     }
-    if (/^Enemy: /.test(t)) { inFight = true; expectHero = true; Sound.sfx("whoosh"); ev("dodge", "🛡️", t.slice(7)); return; }
+    if (/^Enemy: /.test(t)) { inFight = true; expectHero = true; Sound.sfx(/^Enemy: StädHäxan/.test(t) ? "croak" : "whoosh"); ev("dodge", "🛡️", t.slice(7)); return; }
     if (/ vinner Fångdjupet!$/.test(t)) { inFight = false; roomSong = "title"; Sound.jingle("final", "title"); ev("win big", "👑", t); return; }
-    if (/ vinner mot .*!$/.test(t)) { inFight = false; Sound.jingle("win", roomSong); starBurst(); ev("win", "🏆", t); return; }
+    if (/ vinner mot .*!$/.test(t)) { inFight = false; Sound.jingle("win", roomSong); if (/Entrédörren/.test(t)) Sound.sfx("doorOpen"); else if (/StädHäxan/.test(t)) Sound.sfx("croakDie"); starBurst(); ev("win", "🏆", t); return; }
     if ((m = t.match(/^Fiende (.+) dyker upp!$/))) {
       inFight = true;   // striden börjar här: alla mätare från nu går till stridspanelen, även stressbollen i första rundan
       // stridsmusik: Martin har sin egen, och StädHäxan slåss till en snabbare klibbig låt
       fightSong = /Martin/.test(m[1]) ? "boss" : roomSong === "sticky" ? "stickyFight" : "battle";
-      Sound.sfx("alert"); Sound.music(fightSong);
+      Sound.sfx(/StädHäxan/.test(m[1]) ? "cackle" : "alert"); Sound.music(fightSong);
       if (/Martin/.test(m[1])) { titleCard(m[1].toUpperCase(), "boss"); shake(true); flash("red"); } else titleCard(m[1], "foe");
       ev("appear", "👹", t); return; }
     if (/^Men vänta\.\.\./.test(t)) { Sound.sfx("alert"); ev("appear", "❗", t); shake(false); return; }
-    if (/blir arg!|skrattar elakt/.test(t)) { Sound.sfx(/skrattar/.test(t) ? "laugh" : "alert"); ev("danger", /skrattar/.test(t) ? "😈" : "😡", t); shake(true); flash("red"); return; }
+    if (/blir arg!|skrattar elakt/.test(t)) { Sound.sfx(/skrattar/.test(t) ? "cackle" : "alert"); ev("danger", /skrattar/.test(t) ? "😈" : "😡", t); shake(true); flash("red"); return; }
     if (/besegrades av|dog av sin egen attack/.test(t)) { inFight = false; roomSong = "title"; Sound.jingle("lose", null); ev("danger", "☠️", t); return; }
 
     // Repliker: Trollkarl: "Thou shall not pass!"
     if ((m = t.match(/^([^:"]{1,30}): "(.*)"$/))) {
-      Sound.sfx(/^Lektor Martin/.test(m[1]) ? "blah" : "talk");
+      Sound.sfx(/^Lektor Martin/.test(m[1]) ? "blah" : /^StädHäxan/.test(m[1]) ? "croak" : "talk");
       const q = el("span", "q");
       ev("say", "💬", el("span", "who", m[1] + " "), q);
       typeInto(q, "“" + m[2] + "”");
@@ -1077,15 +1081,17 @@ footer a{color:var(--dim)}
       [/^Fortsätter du senare/, "info", "ℹ️"],
       [/står i vägen/, "warn", "🚧"],
       [/^(Ogiltigt val|Starta ett äventyr först|Det finns ingen|Det finns inga|Det finns inget|Kunde inte|Sparfilen)/, "warn", "⚠️"],
+      [/^Frida ger dig en brasklapp/, "loot", "📝"],
       [/^Frida dyker upp/, "appear", "🧚"],
       [/^Tack för att du spelade/, "big", "👋"],
       [/^Välj 1 för att börja om/, "info", "🔁"],
       [/dricker|tar en/, "heal", "☕"],
       [/kaffe|kanelbulle|Kannan/, "info", "☕"]];
     const OTHER_SOUNDS = [
+      [/^Du går till Skoldörren/, "doorSkol"], [/^Du går till Kafferummet/, "doorKaffe"], [/^Du går till Korridoren/, "doorSkrubb"], [/^Du går till Lektionssalen/, "doorLektion"],
       [/^Du går till/, "steps"], [/^Du letar/, "rummage"], [/^Du hittar inget/, "nope"], [/^Äventyret är sparat/, "save"],
       [/^(Ogiltigt val|Starta ett äventyr först|Det finns ingen|Det finns inget|Kunde inte|Sparfilen|Du är redan i)/, "buzz"],
-      [/^Frida dyker upp/, "sparkle"], [/^(Äventyret börjar!|Välkommen tillbaka)/, "fanfare"], [/^Du byter till/, "swap"],
+      [/^Frida ger dig en brasklapp/, "find"], [/^Frida dyker upp/, "sparkle"], [/^(Äventyret börjar!|Välkommen tillbaka)/, "fanfare"], [/^Du byter till/, "swap"],
       [/står i vägen/, "locked"], [/^Du låter /, "drop"], [/^Visa hjältens utrustning/, "bag"], [/^Tack för att du spelade/, "bye"]];
     const rule = RULES.find(([re]) => re.test(t));
     if (rule) {
@@ -1100,7 +1106,7 @@ footer a{color:var(--dim)}
         const other = OTHER_SOUNDS.find(([re]) => re.test(t));
         if (other) Sound.sfx(other[1]);
       }
-      if (rule[2] === "🔒" && !/inlåst/.test(t)) Sound.sfx("locked");   // ett låst rum: handtaget skramlar
+      if (rule[2] === "🔒" && !/slår igen/.test(t)) Sound.sfx("locked");   // ett låst rum: handtaget skramlar
       else if (rule[2] === "🔒") {           // dörren slår igen: skaka, och Skoldörren låst i kartan direkt
         shake(true); flash("red"); Sound.sfx("slam");
         if (mapState.length) showMap(mapState.map((s, i) => i === 0 ? "#" : s));

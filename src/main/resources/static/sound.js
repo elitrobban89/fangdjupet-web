@@ -37,7 +37,7 @@
       melody: "0 1 0 _ 2 _ 1 . 3 2 1 _ 0 _ _ . 5 _ 3 2 1 _ 2 1 0 _ -1 _ 0 _ . .",
       bass:   "-5 -5 . -4 -5 . -3 . -5 -5 . -4 -3 . -4 .",
       drums:  "k.ps.kpsk.ps.kss" },
-    lecture: { scale: "insen", root: 57, bpm: 100, lead: "triangle",
+    lecture: { scale: "insen", root: 57, bpm: 100, lead: "triangle", creepy: true,
       melody: "0 _ _ 1 _ _ 2 _ 3 _ 2 _ 1 _ _ . 0 _ _ 1 _ _ 2 _ 4 _ 3 _ 1 _ _ .",
       bass:   "-5 _ _ _ -5 _ _ _ -4 _ _ _ -5 _ _ _",
       drums:  "k.......s.......k.k.....s......." },
@@ -70,6 +70,7 @@
     return song.root + sc[((deg % n) + n) % n] + 12 * o;
   };
 
+  const MUSIC_VOL = 0.32;
   let ctx = null, master, musicBus, sfxBus, noiseBuf, crusher;
   let on = true;
   try { on = localStorage.getItem("fangdjupet-ljud") !== "av"; } catch {}
@@ -82,7 +83,7 @@
       master = ctx.createGain(); master.gain.value = on ? 0.55 : 0;
       const comp = ctx.createDynamicsCompressor();
       master.connect(comp).connect(ctx.destination);
-      musicBus = ctx.createGain(); musicBus.gain.value = 0.32; musicBus.connect(master);
+      musicBus = ctx.createGain(); musicBus.gain.value = MUSIC_VOL; musicBus.connect(master);
       sfxBus = ctx.createGain(); sfxBus.gain.value = 0.8; sfxBus.connect(master);
       noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const d = noiseBuf.getChannelData(0);
@@ -167,7 +168,10 @@
         tone("square", f, at, dur, v * 0.8, musicBus, { from, glide: sd * 0.9, vibrato: 5.5, depth: 28, lowpass: 2400, lowpassTo: 700, q: 6 });
         tone("square", f, at, dur, v * 0.45, musicBus, { from, glide: sd * 1.2, detune: 22, lowpass: 1800 });
       } else {
-        tone(s.lead, f, at, dur, v, musicBus, { vibrato: dur > sd * 2 ? 6 : 0, depth: 12 });
+        tone(s.lead, f, at, dur, v, musicBus, s.creepy
+          ? { vibrato: 3.2, depth: 30, detune: 16 * Math.sin(i * 0.37) }   // Lektionssalen: tonerna håller inte riktigt stämningen
+          : { vibrato: dur > sd * 2 ? 6 : 0, depth: 12 });
+        if (s.creepy && dur > sd * 2) tone("sine", f * Math.SQRT2, at, dur * 1.5, v * 0.35, musicBus, { attack: dur * 0.9, vibrato: 2.3, depth: 45 });   // en tritonus växer fram bakom
         if (s.lead === "square") tone("square", f * 2, at + sd * 0.5, sd * 0.5, v * 0.18, musicBus);   // eko en oktav upp
       }
       voice = f;
@@ -189,6 +193,8 @@
 
   function tick() {
     if (!ctx || !on) return;
+    haunt(songName === "lecture");
+    oddNoises();
     while (nextAt < ctx.currentTime + 0.15) {
       if (once) {
         playStep(once.song, once.i, nextAt);
@@ -228,6 +234,202 @@
     start();
   }
 
+  // ---------- fula världsljud: räknas fram sampel för sampel ----------
+  // En oscillator kan inte gnissla. Ett gångjärn fastnar och släpper hundra gånger i sekunden, och varje
+  // släpp är en knäpp som får träet att ringa. Städhäxans stämband är samma sak med en mun som klangrum.
+  // Därför byggs de här ljuden av knäppar (pulses) som ringer (ring) och sedan krossas (ugly).
+  const seeded = seed => () => {
+    seed = seed + 0x6D2B79F5 | 0;
+    let x = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x;
+    return ((x ^ x >>> 14) >>> 0) / 4294967296;
+  };
+  const fresh = () => seeded(Math.random() * 2147483647 | 0);   // varje dörr gnisslar lite olika
+
+  // Knäppar: rate(u) ger knäppar per sekund vid u = 0..1, och 0 betyder att gångjärnet sitter fast en stund
+  function pulses(n, sr, rate, amp, r, jitter = 0.3) {
+    const x = new Float32Array(n);
+    for (let p = 0; p < n;) {
+      const u = p / n, hz = rate(u);
+      if (hz <= 0) { p += sr * 0.02; continue; }
+      x[p | 0] = amp(u) * (0.55 + 0.45 * r());
+      p += sr / hz * (1 + (r() - 0.5) * jitter);
+    }
+    return x;
+  }
+
+  // Klangrummet: res är [hz, avklingning i sekunder, styrka] för varje resonans
+  function ring(x, sr, res) {
+    const y = new Float32Array(x.length);
+    for (const [hz, decay, gain] of res) {
+      const R = Math.exp(-1 / (decay * sr)), a1 = 2 * R * Math.cos(2 * Math.PI * hz / sr), a2 = -R * R, k = gain * (1 - R);
+      let y1 = 0, y2 = 0;
+      for (let i = 0; i < x.length; i++) { const v = x[i] * k + a1 * y1 + a2 * y2; y2 = y1; y1 = v; y[i] += v; }
+    }
+    return y;
+  }
+
+  function normal(d) {
+    let peak = 1e-6;
+    for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i]));
+    for (let i = 0; i < d.length; i++) d[i] /= peak;
+    return d;
+  }
+
+  // Krossen: förvrängning, få bitar och låg samplingsfrekvens. Det är här ljudet blir fult på riktigt.
+  function ugly(d, sr, hz, bits, drive) {
+    normal(d);
+    const step = Math.max(1, Math.round(sr / hz)), levels = 2 ** (bits - 1), end = Math.min(d.length, sr * 0.01 | 0);
+    for (let i = 0; i < d.length; i += step) {
+      const v = Math.round(Math.tanh(d[i] * drive) * levels) / levels;
+      for (let j = i; j < Math.min(i + step, d.length); j++) d[j] = v;
+    }
+    for (let i = 0; i < end; i++) d[d.length - 1 - i] *= i / end;   // inget knäpp när ljudet tar slut
+    return d;
+  }
+
+  function mixIn(d, x, at, gain) {
+    normal(x);
+    for (let i = 0; i < x.length && at + i < d.length; i++) d[at + i] += x[i] * gain;
+  }
+
+  const FOLEY_VOL = 0.4;    // alla världsljud på en gång: de ska skrämmas, inte skrika
+  const CROAK_VOL = 0.5;    // kraxandet ligger över resten: StädHäxan ska höras
+  function splay(d, t, vol, level = FOLEY_VOL) {
+    const b = ctx.createBuffer(1, d.length, ctx.sampleRate), src = ctx.createBufferSource(), g = ctx.createGain();
+    b.copyToChannel(d, 0);
+    src.buffer = b; g.gain.value = vol * level;
+    src.connect(g).connect(sfxBus);
+    src.start(t);
+    return src;
+  }
+
+  // Musiken viker undan så att gnisslet hörs
+  function duck(t, dur) {
+    musicBus.gain.cancelScheduledValues(t);
+    musicBus.gain.setTargetAtTime(MUSIC_VOL * 0.4, t, 0.03);
+    musicBus.gain.setTargetAtTime(MUSIC_VOL, t + dur, 0.25);
+  }
+
+  // Varje rum har sin dörr: from/to är knäppar per sekund, res är dörrens virke.
+  // Håll dem över ungefär 50: långsammare knäppar hörs en och en, och då hakar gnisslet upp sig.
+  const DOORS = {
+    skol:    { dur: 1.2, from: 110, to: 190, hz: 11000, bits: 6, res: [[420, 0.03, 1], [1150, 0.02, 0.7], [2300, 0.012, 0.4]] },
+    kaffe:   { dur: 0.7, from: 240, to: 420, hz: 14000, bits: 6, res: [[1500, 0.012, 1], [2900, 0.01, 0.7]] },
+    skrubb:  { dur: 0.9, from: 70, to: 120, hz: 9000, bits: 5, res: [[320, 0.05, 1], [760, 0.03, 0.6]] },
+    lektion: { dur: 1.7, from: 120, to: 62, hz: 8000, bits: 5, res: [[260, 0.06, 1], [610, 0.04, 0.6], [1900, 0.01, 0.25]] },
+    entre:   { dur: 2.1, from: 80, to: 230, hz: 10000, bits: 5, res: [[300, 0.05, 1], [980, 0.025, 0.8], [2100, 0.012, 0.5]] }
+  };
+
+  // Ett jämnt gnissel som glider från from till to, utan stopp
+  function creak(o) {
+    const sr = ctx.sampleRate, n = o.dur * sr | 0, r = fresh(), ph = r() * 6;
+    const rate = u => (o.from + (o.to - o.from) * u * u * (3 - 2 * u)) * (1 + 0.05 * Math.sin(u * o.dur * 9 + ph));
+    const amp = u => Math.sin(Math.PI * u) ** 0.7;
+    return ugly(ring(pulses(n, sr, rate, amp, r, 0.04), sr, o.res), sr, o.hz, o.bits, 1.6);
+  }
+
+  // En smäll: tung duns, ramen skramlar, och ekot i korridoren
+  function bang(dur, low, rattleRes, drive) {
+    const sr = ctx.sampleRate, n = dur * sr | 0, r = fresh(), d = new Float32Array(n);
+    let phase = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      phase += 2 * Math.PI * (low + 70 * Math.exp(-t * 22)) / sr;
+      d[i] = Math.sin(phase) * Math.exp(-t * 9) + (r() * 2 - 1) * Math.exp(-t * 60) * 0.7;
+    }
+    mixIn(d, ring(pulses(n, sr, u => u < 0.5 ? 34 - 40 * u : 0, u => u < 0.04 ? 0 : (1 - u) ** 2, r, 0.6), sr, rattleRes), 0, 0.5);
+    const delay = sr * 0.17 | 0;
+    for (let i = delay; i < n; i++) d[i] += d[i - delay] * 0.38;
+    return ugly(d, sr, 7000, 5, drive);
+  }
+
+  // Ett kraxande: stämband som knappt håller ihop. Varannan puls är svagare, och det är det som rosslar.
+  function croakData(dur, from, to, seedR) {
+    const sr = ctx.sampleRate, n = dur * sr | 0, r = seedR || fresh(), x = new Float32Array(n), rasp = sr * 0.004 | 0;
+    let weak = false;
+    for (let p = 0; p < n;) {
+      const u = p / n, hz = (from + (to - from) * u) * (1 + 0.18 * Math.sin(u * 40));
+      const a = Math.min(1, u * 14) * Math.min(1, (1 - u) * 4) * (weak ? 0.45 : 1);
+      for (let j = 0; j < rasp && p + j < n; j++) x[(p | 0) + j] += (r() * 2 - 1) * a * 0.35 * (1 - j / rasp);
+      x[p | 0] += a;
+      weak = !weak;
+      p += sr / hz * (1 + (r() - 0.5) * 0.4);
+    }
+    return ugly(ring(x, sr, [[720, 0.006, 1], [1240, 0.005, 0.8], [2750, 0.004, 0.5]]), sr, 10000, 5, 3.2);
+  }
+
+  // ---------- Lektionssalen: något är fel där inne ----------
+  // Ett lysrör som brummar och blinkar, och långt bort krita, en klocka som går fel och viskningar baklänges.
+  const HAUNT_RATE = 12000, HAUNT_SECONDS = 28, HAUNT_VOL = 0.5;
+  function hauntData() {
+    const sr = HAUNT_RATE, n = HAUNT_SECONDS * sr, r = seeded(1338), d = new Float32Array(n);
+    let flicker = 1, goal = 1;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      if (i % 600 === 0) goal = i < n - 2 * sr && r() < 0.06 ? 0.15 : 1;
+      flicker += (goal - flicker) * 0.02;
+      const hum = Math.sin(2 * Math.PI * 100 * t) * 0.5 + Math.sin(2 * Math.PI * 200 * t) * 0.25
+        + (Math.sin(2 * Math.PI * 300 * t) > 0 ? 0.12 : -0.12);
+      d[i] = hum * flicker * 0.05 + (Math.sin(2 * Math.PI * 41 * t) + Math.sin(2 * Math.PI * 43.75 * t)) * 0.03;
+    }
+    const chalk = (at, dur) => mixIn(d, ring(pulses(dur * sr | 0, sr, u => 620 + 380 * Math.sin(u * 9),
+      u => Math.sin(Math.PI * u), r, 0.2), sr, [[2300, 0.01, 1], [3700, 0.008, 0.7]]), at * sr | 0, 0.3);
+    const whisper = (at, dur, syllables) => {
+      const x = new Float32Array(dur * sr | 0);
+      for (let i = 0; i < x.length; i++) {
+        const u = i / x.length;   // stiger och klipps av: så låter tal som spelas baklänges
+        x[i] = (r() * 2 - 1) * u ** 2.2 * Math.abs(Math.sin(Math.PI * u * syllables)) ** 0.5;
+      }
+      mixIn(d, ring(x, sr, [[480, 0.004, 1], [1400, 0.003, 0.8], [2500, 0.003, 0.5]]), at * sr | 0, 0.28);
+    };
+    const clock = at => {
+      const x = new Float32Array(3 * sr);
+      [0, 0.4, 0.8, 1.2, 1.95, 2.1].forEach(s => x[s * sr | 0] = 1);   // de två sista kommer fel
+      mixIn(d, ring(x, sr, [[1700, 0.006, 1], [900, 0.01, 0.6]]), at * sr | 0, 0.22);
+    };
+    chalk(3.5, 0.8); whisper(8, 1.8, 7); clock(12); chalk(17, 0.5); whisper(21.5, 2.4, 9);
+    return ugly(d, sr, 6000, 6, 1.4);
+  }
+
+  let hauntBuf = null, hauntSrc = null, hauntGain = null;
+  function haunt(want) {
+    if (want === !!hauntSrc) return;
+    const t = ctx.currentTime;
+    if (want) {
+      if (!hauntBuf) {
+        hauntBuf = ctx.createBuffer(1, HAUNT_RATE * HAUNT_SECONDS, HAUNT_RATE);
+        hauntBuf.copyToChannel(hauntData(), 0);
+      }
+      hauntSrc = ctx.createBufferSource(); hauntGain = ctx.createGain();
+      hauntSrc.buffer = hauntBuf; hauntSrc.loop = true;
+      hauntGain.gain.setValueAtTime(0, t);
+      hauntGain.gain.setTargetAtTime(HAUNT_VOL, t, 0.8);
+      hauntSrc.connect(hauntGain).connect(musicBus);
+      hauntSrc.start(t);
+    } else {
+      hauntGain.gain.setTargetAtTime(0, t, 0.3);
+      hauntSrc.stop(t + 1.5);
+      hauntSrc = null;
+    }
+  }
+
+  // Dov träduns. Tonhöjden varierar lite, annars blir samma ljud tjatigt i en lång strid.
+  function wood(pitch) {
+    const sr = ctx.sampleRate, x = new Float32Array(sr * 0.22 | 0), r = fresh(), p = pitch * (0.92 + r() * 0.16);
+    for (let i = 0; i < sr * 0.006; i++) x[i] = (r() * 2 - 1) * (1 - i / (sr * 0.006));
+    return ugly(ring(x, sr, [[150 * p, 0.07, 1], [340 * p, 0.04, 0.6], [690 * p, 0.02, 0.25]]), sr, 9000, 6, 2);
+  }
+
+  let creaking = null;   // dörren som gnisslar just nu: smäller den igen tystnar gnisslet
+  function door(o, t) {
+    SFX.steps(t);
+    const at = t + 0.42;
+    creaking = splay(creak(o), at, 0.5);
+    duck(at, o.dur);
+    return at + o.dur;
+  }
+
   // ---------- ljudeffekterna: medvetet fula ----------
   const SFX = {
     blip(t) { tone("square", 1320, t, 0.05, 0.12, sfxBus, { from: 880, glide: 0.03 }); },
@@ -254,12 +456,49 @@
     gulp(t) { [0, 0.14].forEach(d => tone("sine", 620, t + d, 0.12, 0.35, sfxBus, { from: 260, glide: 0.1 })); },
     pickup(t) { [0, 2, 4, 5].forEach((d, i) => tone("square", freq(pitch(SONGS.door, d) + 12), t + 0.06 * i, 0.07, 0.1, sfxBus)); },
     slam(t) {
-      tone("sine", 38, t, 0.5, 0.9, sfxBus, { from: 110, glide: 0.12 });
-      noise(t, 0.35, 0.6, crusher, { type: "lowpass", f: 700 });
+      if (creaking) { creaking.stop(t); creaking = null; }
+      splay(bang(1.1, 40, [[2400, 0.02, 1], [3700, 0.015, 0.7]], 2.6), t, 0.85);
+      duck(t, 0.9);
+    },
+    // ---- dörrarna: varje rum gnisslar på sitt sätt ----
+    doorSkol(t) { door(DOORS.skol, t); },
+    doorKaffe(t) { door(DOORS.kaffe, t); },
+    doorSkrubb(t) { const end = door(DOORS.skrubb, t); tone("sine", 130, end - 0.1, 0.2, 0.22, sfxBus, { from: 800, glide: 0.12 }); },   // klibbig: släpper med ett "plopp"
+    doorLektion(t) { door(DOORS.lektion, t); },
+    // Entrédörren är besegrad och glider upp, långsamt och högt. En skruv ramlar ur och studsar.
+    doorOpen(t) {
+      splay(creak(DOORS.entre), t, 0.6);
+      duck(t, DOORS.entre.dur);
+      [0, 0.17, 0.29, 0.36].forEach((d, i) => tone("sine", 2900, t + DOORS.entre.dur + d, 0.09, 0.14 / (i + 1), sfxBus));
+    },
+    // Striden mot Entrédörren: en kort träduns åt varje håll. De hörs varje runda, så de ska vara dova och korta.
+    doorHit(t) { splay(wood(1), t, 0.55); },
+    doorSlap(t) { splay(wood(0.7), t, 0.7); },
+    // DROP TABLE: golvet under Martin mullrar och ger sedan vika
+    dropTable(t) {
+      const sr = ctx.sampleRate, n = sr * 1.7 | 0, r = fresh();
+      const rumble = ring(pulses(n, sr, u => 34 + 30 * u, u => Math.min(1, u * 5) * (1 - u) ** 0.6, r, 0.7), sr,
+        [[46, 0.18, 1], [88, 0.1, 0.8], [240, 0.03, 0.4]]);
+      splay(ugly(rumble, sr, 5000, 4, 3.4), t, 0.85);
+      splay(bang(0.9, 30, [[700, 0.03, 1], [1500, 0.02, 0.6]], 3), t + 1.1, 0.8);
+      duck(t, 1.9);
+    },
+    // ---- StädHäxan: hon kraxar ----
+    croak(t) {
+      const twice = Math.random() < 0.5;
+      splay(croakData(0.34, 125, 82), t + 0.16, 0.55, CROAK_VOL);
+      if (twice) splay(croakData(0.24, 112, 78), t + 0.56, 0.45, CROAK_VOL);
+    },
+    cackle(t) {
+      [150, 172, 160, 140, 118].forEach((hz, i) => splay(croakData(0.12, hz, hz * 0.8), t + i * 0.15, 0.5, CROAK_VOL));
+      duck(t, 0.8);
+    },
+    croakDie(t) {
+      splay(croakData(1.0, 115, 26), t, 0.6, CROAK_VOL);
+      tone("sine", 120, t + 1, 0.2, 0.4, sfxBus, { from: 700, glide: 0.12 });
+      duck(t, 1.1);
     },
     alert(t) { tone("square", freq(81), t, 0.08, 0.12, sfxBus); tone("square", freq(74), t + 0.09, 0.12, 0.12, sfxBus); },
-    // StädHäxan skrattar: ha-ha-ha som sjunker, i en sur sågtand
-    laugh(t) { [0, 1, 2, 3].forEach(i => tone("sawtooth", 520 - i * 70, t + i * 0.13, 0.11, 0.18, crusher, { from: 620 - i * 70, glide: 0.1, vibrato: 30, depth: 80 })); },
     find(t) { [0, 4, 7, 12, 16].forEach((d, i) => tone("triangle", freq(79 + d), t + 0.07 * i, 0.12, 0.12, sfxBus)); },
     // ---- fiendernas slag: varje fiende låter på sitt eget sätt ----
     club(t) { tone("sine", 55, t, 0.25, 0.8, sfxBus, { from: 180, glide: 0.1 }); noise(t, 0.2, 0.5, crusher, { type: "lowpass", f: 400 }); },
@@ -314,16 +553,78 @@
       up.forEach((d, i) => { tone("square", freq(67 + d), at, len[i], 0.12, sfxBus); tone("triangle", freq(55 + d), at, len[i], 0.14, sfxBus); at += len[i] + 0.03; });
     },
     swap(t) { tone("square", 900, t, 0.03, 0.1, sfxBus); tone("square", 1350, t + 0.07, 0.03, 0.1, sfxBus); },
-    locked(t) { for (let i = 0; i < 3; i++) noise(t + i * 0.09, 0.06, 0.35, crusher, { f: 1200, q: 6 }); tone("sine", 90, t + 0.3, 0.12, 0.3, sfxBus); },
+    // handtaget skramlar, och dörren ger sig inte
+    locked(t) {
+      const sr = ctx.sampleRate, x = new Float32Array(sr * 0.5 | 0), r = fresh();
+      [0, 0.07, 0.15, 0.2, 0.31].forEach(s => x[(s + r() * 0.02) * sr | 0] = 0.6 + r() * 0.4);
+      splay(ugly(ring(x, sr, [[1900, 0.03, 1], [3300, 0.02, 0.7], [5100, 0.012, 0.4]]), sr, 11000, 5, 3), t, 0.4);
+      tone("sine", 90, t + 0.38, 0.12, 0.3, sfxBus);
+    },
     talk(t) { [0, 4, 2, 5].forEach((d, i) => tone("square", freq(69 + d), t + i * 0.07, 0.05, 0.08, sfxBus, { lowpass: 2500 })); },
     bag(t) { noise(t, 0.25, 0.25, sfxBus, { f: 1500, to: 5000, q: 4 }); tone("square", 400, t, 0.25, 0.04, sfxBus, { from: 200, glide: 0.25 }); },
     drop(t) { tone("sine", 80, t, 0.18, 0.4, sfxBus, { from: 260, glide: 0.12 }); },
     bye(t) { [12, 7, 0].forEach((d, i) => tone("triangle", freq(72 + d), t + i * 0.16, 0.2, 0.14, sfxBus)); }
   };
 
+  // ---------- fula småljud: något rör sig i skolan ----------
+  // Tysta och sällsynta, ett i taget. Bara i rummen: under strid är det musiken och slagen som gäller.
+  const ODD_VOL = 0.12;
+  const far = (d, t, vol = 1) => splay(d, t, vol, ODD_VOL);
+  const hum = (dur, rate, res, hz, bits, drive, jitter) => {
+    const sr = ctx.sampleRate, n = dur * sr | 0, r = fresh();
+    return ugly(ring(pulses(n, sr, rate, u => Math.sin(Math.PI * u), r, jitter), sr, res), sr, hz, bits, drive);
+  };
+  const ODD = {
+    crow(t) { far(croakData(0.22, 330, 240), t); far(croakData(0.2, 300, 220), t + 0.38, 0.8); },
+    farDoor(t) { far(creak({ ...DOORS.kaffe, dur: 0.6 }), t, 0.8); },
+    gurgle(t) {
+      for (let i = 0; i < 7; i++) {
+        tone("sine", 420 + Math.random() * 300, t + i * 0.09 + Math.random() * 0.03, 0.07, 0.05, sfxBus, { from: 160 + Math.random() * 80, glide: 0.05 });
+      }
+    },
+    drip(t) { [0, 0.55, 0.8].forEach(d => tone("sine", 1300, t + d, 0.06, 0.05, sfxBus, { from: 700, glide: 0.03 })); },
+    pipe(t) { far(hum(0.55, u => 78 - 26 * u, [[280, 0.02, 1], [640, 0.015, 0.6]], 7000, 5, 2.6, 0.25), t, 0.9); },   // röret rapar
+    mop(t) {
+      noise(t, 0.3, 0.1, crusher, { type: "lowpass", f: 900, to: 250, q: 3 });
+      tone("sine", 140, t + 0.24, 0.14, 0.06, sfxBus, { from: 520, glide: 0.09 });
+    },
+    bucket(t) {
+      const sr = ctx.sampleRate, x = new Float32Array(sr * 0.5 | 0);
+      x[0] = 1;
+      far(ugly(ring(x, sr, [[640, 0.12, 1], [1510, 0.08, 0.7], [2680, 0.05, 0.4]]), sr, 11000, 6, 1.6), t, 0.8);
+    },
+    witchFar(t) { far(croakData(0.3, 120, 85), t, 0.7); },
+    scrape(t) { far(hum(0.7, u => 150 + 90 * u, [[520, 0.02, 1], [1350, 0.012, 0.6]], 9000, 5, 2, 0.12), t); },   // en stol, men ingen sitter där
+    cough(t) {
+      [0, 0.24].forEach(d => {
+        noise(t + d, 0.13, 0.1, crusher, { f: 900, to: 500, q: 1.2 });
+        tone("square", 140, t + d, 0.1, 0.03, sfxBus, { lowpass: 700 });
+      });
+    },
+    marker(t) { far(hum(0.3, u => 700 + 500 * Math.sin(u * 6), [[2100, 0.008, 1], [3300, 0.006, 0.5]], 11000, 5, 1.8, 0.08), t, 0.7); }   // tuschpennan på tavlan
+  };
+  const ODD_ROOMS = {
+    door: ["crow", "farDoor"],
+    coffee: ["gurgle", "drip", "pipe"],
+    sticky: ["drip", "mop", "bucket", "witchFar"],
+    lecture: ["scrape", "cough", "marker"]
+  };
+
+  let oddAt = 0, oddRoom = "", oddLast = "";
+  function oddNoises() {
+    if (songName !== oddRoom) { oddRoom = songName; oddAt = ctx.currentTime + 8 + Math.random() * 8; }
+    const pool = ODD_ROOMS[songName];
+    if (!pool || ctx.currentTime < oddAt) return;
+    const options = pool.filter(name => name !== oddLast);
+    oddLast = options[Math.random() * options.length | 0];
+    oddAt = ctx.currentTime + 14 + Math.random() * 18;
+    ODD[oddLast](ctx.currentTime + 0.02);
+  }
+
   function sfx(name) {
-    if (!ctx || !on || !SFX[name]) return;
-    SFX[name](ctx.currentTime + 0.01);
+    const play = SFX[name] || ODD[name];
+    if (!ctx || !on || !play) return;
+    play(ctx.currentTime + 0.01);
   }
 
   function toggle() {
