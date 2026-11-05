@@ -235,6 +235,15 @@ button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
 #fx .flash.white{background:rgba(235,240,255,.72)}
 #fx .bolt{left:50%;top:6%;font-size:clamp(110px,26vw,240px);line-height:1;filter:drop-shadow(0 0 26px #cfe0ff);animation:bolt .5s ease-out forwards}
 @keyframes bolt{0%{opacity:0;transform:translateX(-50%) scaleY(.3)}12%{opacity:1;transform:translateX(-50%) scaleY(1.1)}100%{opacity:0;transform:translateX(-50%) scaleY(1)}}
+#fx .v3d{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;white-space:pre;color:#ffd27a;font:clamp(6px,1.72vw,15px)/1.08 ui-monospace,Consolas,Menlo,monospace;box-shadow:0 0 0 100vmax rgba(7,9,13,.9);animation:v3din .5s ease-out both;transition:opacity .6s}
+#fx .v3d.out{opacity:0}
+#fx .v3d b{font-weight:400}
+#fx .v3d .mg,#fx .v3d .me{color:#ffd27a;text-shadow:0 0 8px rgba(255,210,122,.5)}
+#fx .v3d .mw{color:#74bc96}
+#fx .v3d .mr,#fx .v3d .mo{color:#ff6b5b}
+#fx .v3d .mf,#fx .v3d .mc{color:#9fc3ee;text-shadow:0 0 8px rgba(159,195,238,.6)}
+#fx .v3d .md{color:#b79cff}
+@keyframes v3din{from{opacity:0}to{opacity:1}}
 #fx .bit{position:absolute;top:-20px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
 /* ---- animationerna: attacker som flyger, smällar, siffror och titelkort ---- */
 #fx .sp{position:absolute;will-change:transform,opacity;white-space:nowrap}
@@ -762,6 +771,154 @@ footer a{color:var(--dim)}
     }
   }
 
+  // ---------- vinstfilmen: skolan och pokalen i 3D, ritade med tecken (samma som Ascii3d.java i spelet) ----------
+  const Film3d = (() => {
+    const FRAMES = 130, H = 20, SCHOOL_W = 42, TROPHY_W = 36, SHADES = ".:-=+*#%@", CAMERA = 6;
+    const unit = (x, y, z) => { const l = Math.sqrt(x * x + y * y + z * z); return l ? [x / l, y / l, z / l] : [0, 0, 0]; };
+    const LIGHT = unit(-0.45, 0.65, -0.62);
+    const grid = (s, count, size) => Math.abs(s * count - Math.floor(s * count) - 0.5) < size / 2;
+
+    function wall(dots, [a, b, c, d], paint) {
+      const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [d[0] - a[0], d[1] - a[1], d[2] - a[2]];
+      const n = unit(u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]);
+      const across = Math.sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2]), up = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+      for (let t = 0; t <= 1; t += 0.03 / up) for (let s = 0; s <= 1; s += 0.03 / across) {
+        const p = [0, 1, 2].map(i => { const l = a[i] + (d[i] - a[i]) * t, r = b[i] + (c[i] - b[i]) * t; return l + (r - l) * s; });
+        const kind = paint(s, t), border = Math.min(Math.min(s, 1 - s) * across, Math.min(t, 1 - t) * up);
+        dots.push([p[0], p[1], p[2], n[0], n[1], n[2], kind !== "o" && border < 0.04 ? "e" : kind]);
+      }
+    }
+    function school() {
+      const dots = [], w = 1.4, d = 0.6, floor = -0.9, eaves = 0.1, ridge = 0.6;
+      const plain = () => "w", roof = () => "r", flag = () => "o";
+      const windows = (s, t) => grid(s, 8, 0.6) && grid(t, 2, 0.5) ? "f" : "w";
+      const endWindows = (s, t) => grid(s, 3, 0.5) && grid(t, 2, 0.5) ? "f" : "w";
+      wall(dots, [[-w, floor, -d], [w, floor, -d], [w, eaves, -d], [-w, eaves, -d]], windows);
+      wall(dots, [[w, floor, d], [-w, floor, d], [-w, eaves, d], [w, eaves, d]], windows);
+      wall(dots, [[w, floor, -d], [w, floor, d], [w, eaves, d], [w, eaves, -d]], endWindows);
+      wall(dots, [[-w, floor, d], [-w, floor, -d], [-w, eaves, -d], [-w, eaves, d]], endWindows);
+      wall(dots, [[w, eaves, -d], [w, eaves, d], [w, ridge, 0], [w, ridge, 0]], plain);
+      wall(dots, [[-w, eaves, d], [-w, eaves, -d], [-w, ridge, 0], [-w, ridge, 0]], plain);
+      const over = w + 0.06, edge = d + 0.08;
+      wall(dots, [[-over, eaves, -edge], [over, eaves, -edge], [over, ridge, 0], [-over, ridge, 0]], roof);
+      wall(dots, [[over, eaves, edge], [-over, eaves, edge], [-over, ridge, 0], [over, ridge, 0]], roof);
+      const tw = 0.34, front = -0.74, back = 0.12, top = 0.92, peak = 1.32, mid = (front + back) / 2, tip = [0, peak, mid];
+      const towerFront = (s, t) => Math.abs(s - 0.5) < 0.2 && t < 0.22 ? "d"
+        : Math.hypot((s - 0.5) * 0.68, (t - 0.8) * 1.82) < 0.17 ? "c" : "w";
+      wall(dots, [[-tw, floor, front], [tw, floor, front], [tw, top, front], [-tw, top, front]], towerFront);
+      wall(dots, [[tw, floor, back], [-tw, floor, back], [-tw, top, back], [tw, top, back]], plain);
+      wall(dots, [[tw, floor, front], [tw, floor, back], [tw, top, back], [tw, top, front]], plain);
+      wall(dots, [[-tw, floor, back], [-tw, floor, front], [-tw, top, front], [-tw, top, back]], plain);
+      wall(dots, [[-tw, top, front], [tw, top, front], tip, tip], roof);
+      wall(dots, [[tw, top, back], [-tw, top, back], tip, tip], roof);
+      wall(dots, [[tw, top, front], [tw, top, back], tip, tip], roof);
+      wall(dots, [[-tw, top, back], [-tw, top, front], tip, tip], roof);
+      wall(dots, [[-0.02, peak, mid], [0.02, peak, mid], [0.02, 1.62, mid], [-0.02, 1.62, mid]], flag);
+      wall(dots, [[0.02, 1.42, mid], [0.5, 1.42, mid], [0.5, 1.62, mid], [0.02, 1.62, mid]], flag);
+      return dots;
+    }
+    function spin(dots, profile, ribs) {
+      for (let i = 0; i + 1 < profile.length; i++) {
+        const [y0, r0] = profile[i], [y1, r1] = profile[i + 1], dy = y1 - y0, dr = r1 - r0, length = Math.hypot(dy, dr);
+        for (let s = 0; s <= 1; s += 0.025 / length) {
+          const y = y0 + dy * s, r = r0 + dr * s;
+          for (let a = 0; a < 2 * Math.PI; a += 0.03 / Math.max(r, 0.2)) {
+            const sin = Math.sin(a), cos = Math.cos(a), rib = ribs && y > 0.05 ? 0.55 * Math.sin(10 * a) : 0;
+            const n = unit(cos * dy - sin * rib * Math.abs(dy), -dr, sin * dy + cos * rib * Math.abs(dy));
+            dots.push([cos * r, y, sin * r, n[0], n[1], n[2], "g"]);
+          }
+        }
+      }
+    }
+    function handle(dots, side) {
+      for (let a = -1.9; a <= 1.9; a += 0.04) {
+        const cx = side * (0.52 + 0.34 * Math.cos(a)), cy = 0.5 + 0.3 * Math.sin(a);
+        for (let b = 0; b < 2 * Math.PI; b += 0.3) {
+          const ox = side * Math.cos(a) * Math.cos(b), oy = Math.sin(a) * Math.cos(b), oz = Math.sin(b);
+          dots.push([cx + 0.07 * ox, cy + 0.07 * oy, 0.07 * oz, ox, oy, oz, "g"]);
+        }
+      }
+    }
+    function trophy() {
+      const dots = [];
+      spin(dots, [[-1, 0.5], [-0.9, 0.5], [-0.84, 0.3], [-0.74, 0.15], [-0.58, 0.08], [-0.46, 0.09], [-0.4, 0.2], [-0.33, 0.09],
+        [-0.22, 0.13], [-0.02, 0.36], [0.22, 0.48], [0.55, 0.55], [0.9, 0.6], [0.97, 0.62]], true);
+      spin(dots, [[0.97, 0.62], [0.93, 0.55], [0.6, 0.42], [0.3, 0.1]], false);
+      handle(dots, 1); handle(dots, -1);
+      return dots;
+    }
+    const level = (kind, light) => kind === "f" || kind === "c" ? 0.72 : kind === "e" ? 0.9
+      : kind === "w" ? 0.05 + 0.42 * light : 0.14 + 0.8 * light;
+
+    function panel(dots, width, angle, scale, lift, tilt) {
+      const shade = [], kinds = [], nearest = [];
+      for (let r = 0; r < H; r++) { shade.push(Array(width).fill(" ")); kinds.push(Array(width).fill("")); nearest.push(Array(width).fill(Infinity)); }
+      const sin = Math.sin(angle), cos = Math.cos(angle), ts = Math.sin(tilt), tc = Math.cos(tilt);
+      for (const [dx, dy, dz, ax, ay, az, kind] of dots) {
+        const nx = ax * cos + az * sin; let nz = az * cos - ax * sin;
+        const ny = ay * tc - nz * ts; nz = ay * ts + nz * tc;
+        if (nz > 0.02 && kind !== "o") continue;   // baksidan syns inte
+        const x = dx * cos + dz * sin; let z = dz * cos - dx * sin;
+        const y = dy * tc - z * ts; z = dy * ts + z * tc;
+        const near = CAMERA / (CAMERA + z);
+        const col = Math.floor(width / 2 + x * near * scale * 2 + 0.5), row = Math.floor(H / 2 - (y + lift) * near * scale + 0.5);
+        if (col < 0 || col >= width || row < 0 || row >= H) continue;
+        const depth = kind === "e" ? z - 0.05 : z;
+        if (depth >= nearest[row][col]) continue;
+        nearest[row][col] = depth;
+        const facing = nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2];
+        const light = kind === "o" ? Math.abs(facing) : Math.max(0, facing);
+        const shine = kind === "g" ? Math.pow(light, 9) * 0.7 : 0;
+        shade[row][col] = SHADES[Math.floor(Math.min(SHADES.length - 1, level(kind, light + shine) * SHADES.length))];
+        kinds[row][col] = kind;
+      }
+      return { shade, kinds };
+    }
+    function twinkle(f, p) {
+      for (let i = 0; i < 9; i++) {
+        const hash = Math.imul(Math.floor(f / 4) * 31 + i + 1, 0x9E3779B1);
+        const r = (hash >>> 7) % H, c = (hash >>> 15) % TROPHY_W;
+        if (p.shade[r][c] !== " ") continue;
+        p.shade[r][c] = f % 4 < 2 ? "+" : "*"; p.kinds[r][c] = "g";
+      }
+    }
+    let models = null;
+    // En bildruta: för varje rad en lista med [tecken, material]
+    function frame(f) {
+      models = models || [school(), trophy()];
+      const e = Math.min(1, f / (FRAMES - 16)), slow = 1 - (1 - e) * (1 - e), zoom = 1 - Math.pow(1 - Math.min(1, f / 26), 3);
+      const left = panel(models[0], SCHOOL_W, 0.55 - 2 * Math.PI * (1 - slow), 6.8 * zoom, -0.33, -0.26);
+      const right = panel(models[1], TROPHY_W, -6 * Math.PI * (1 - slow), 7.9 * zoom, 0.04, -0.4);
+      twinkle(f, right);
+      return left.shade.map((row, r) => [...row.map((ch, c) => [ch, left.kinds[r][c]]), ...right.shade[r].map((ch, c) => [ch, right.kinds[r][c]])]);
+    }
+    return { FRAMES, frame };
+  })();
+  // Filmen läggs över skärmen och försvinner av sig själv. Med minskade rörelser står bara sista bilden still.
+  function victory3d() {
+    if (fx.querySelector(".v3d")) return;
+    const box = el("pre", "v3d"), last = Film3d.FRAMES - 1;
+    const paint = f => {
+      box.innerHTML = Film3d.frame(f).map(row => {
+        let html = "", open = "";
+        for (const [ch, kind] of row) {
+          if (ch !== " " && kind !== open) { html += (open ? "</b>" : "") + "<b class=\"m" + kind + "\">"; open = kind; }
+          html += ch;
+        }
+        return html + (open ? "</b>" : "");
+      }).join("\n");
+    };
+    const leave = () => { box.classList.add("out"); setTimeout(() => box.remove(), 700); };
+    fx.append(box);
+    if (calm.matches) { paint(last); setTimeout(leave, 5000); return; }
+    let f = 0;
+    const tick = () => {
+      paint(f);
+      if (f++ < last) setTimeout(tick, 65); else setTimeout(leave, 2200);
+    };
+    tick();
+  }
+
   // ---------- hp-stapel ----------
   function barNode(cur, max) {
     const bar = el("span", "bar");
@@ -904,7 +1061,7 @@ footer a{color:var(--dim)}
       row.style.animationDelay = Math.min(artIdx++ * 32, 600) + "ms";
       artBox.append(row);
       if (artIdx === 1 && screen.querySelectorAll(".art").length === 1) artBox.classList.add("title");   // första bilden: FANGDJUPET
-      if (/V A N N/.test(t)) { artBox.classList.add("victory"); confetti(); flash("green"); }
+      if (/V A N N/.test(t)) { artBox.classList.add("victory"); confetti(); flash("green"); victory3d(); }
       if (/UTTERLY EXPLAINED/.test(t) && fightSong !== "bossFast") {   // första gången i fas 2: kort, och musiken går upp i tempo
         fightSong = "bossFast"; Sound.music("bossFast");
         titleCard("FAS 2 · UTTERLY EXPLAINED", "boss"); shake(true); flash("red");
