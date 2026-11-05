@@ -232,6 +232,9 @@ button.opt:focus-visible{outline:2px solid var(--you);outline-offset:0}
 #fx .flash.red{background:radial-gradient(ellipse at center,transparent 35%,rgba(255,60,40,.38))}
 #fx .flash.amber{background:radial-gradient(ellipse at center,rgba(233,178,94,.10),transparent 60%)}
 #fx .flash.green{background:radial-gradient(ellipse at center,rgba(116,188,150,.16),transparent 65%)}
+#fx .flash.white{background:rgba(235,240,255,.72)}
+#fx .bolt{left:50%;top:6%;font-size:clamp(110px,26vw,240px);line-height:1;filter:drop-shadow(0 0 26px #cfe0ff);animation:bolt .5s ease-out forwards}
+@keyframes bolt{0%{opacity:0;transform:translateX(-50%) scaleY(.3)}12%{opacity:1;transform:translateX(-50%) scaleY(1.1)}100%{opacity:0;transform:translateX(-50%) scaleY(1)}}
 #fx .bit{position:absolute;top:-20px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
 /* ---- animationerna: attacker som flyger, smällar, siffror och titelkort ---- */
 #fx .sp{position:absolute;will-change:transform,opacity;white-space:nowrap}
@@ -617,6 +620,14 @@ footer a{color:var(--dim)}
   }
   function bigNumber(text, cls) { if (!calm.matches) sprite(text, "num " + cls, 1150); }
   function titleCard(text, cls) { if (!calm.matches) sprite(text, "card " + cls, 1950); }
+  // "Thou shall not pass!": blixten slår ner två gånger, staven dunsar i golvet och orden fyller skärmen.
+  // Två blinkningar är allt, så att det inte flimrar, och inget alls med minskade rörelser (calm).
+  function shallNotPass() {
+    if (calm.matches) return;
+    flash("white"); sprite("⚡", "bolt", 600); shake(false);
+    setTimeout(() => { flash("white"); sprite("⚡", "bolt", 600); }, 420);
+    setTimeout(() => { shake(true); flash("red"); titleCard("THOU SHALL NOT PASS!", "boss"); }, 900);
+  }
   function plusFx(n) {
     if (calm.matches) return;
     for (let i = 0; i < (n || 7); i++) { const s = sprite("+", "plus", 1300); s.style.left = 30 + Math.random() * 40 + "%"; s.style.animationDelay = i * 80 + "ms"; }
@@ -1017,7 +1028,9 @@ footer a{color:var(--dim)}
 
     // Repliker: Trollkarl: "Thou shall not pass!"
     if ((m = t.match(/^([^:"]{1,30}): "(.*)"$/))) {
-      Sound.sfx(/^Lektor Martin/.test(m[1]) ? "blah" : /^StädHäxan/.test(m[1]) ? "croak" : "talk");
+      const thou = /Thou shall not pass/.test(m[2]);
+      Sound.sfx(thou ? "thunder" : /^Lektor Martin/.test(m[1]) ? "blah" : /^StädHäxan/.test(m[1]) ? "croak" : "talk");
+      if (thou) shallNotPass();
       const q = el("span", "q");
       ev("say", "💬", el("span", "who", m[1] + " "), q);
       typeInto(q, "“" + m[2] + "”");

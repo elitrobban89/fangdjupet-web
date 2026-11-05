@@ -508,6 +508,14 @@
       tone("sine", 120, t + 1, 0.2, 0.2, sfxBus, { from: 700, glide: 0.12 });
       duck(t, 1.1);
     },
+    // Trollkarlen: blixten, åskan som mullrar och staven som dunsar i golvet
+    thunder(t) {
+      noise(t, 0.12, 0.8, sfxBus, { type: "highpass", f: 5000 });
+      noise(t + 0.05, 1.1, 0.7, sfxBus, { type: "lowpass", f: 420, to: 60 });
+      tone("sine", 42, t + 0.9, 0.7, 0.95, sfxBus, { from: 130, glide: 0.12 });
+      noise(t + 0.9, 0.45, 0.6, sfxBus, { type: "lowpass", f: 800 });
+      duck(t, 0.9);
+    },
     alert(t) { tone("square", freq(81), t, 0.08, 0.12, sfxBus); tone("square", freq(74), t + 0.09, 0.12, 0.12, sfxBus); },
     find(t) { [0, 4, 7, 12, 16].forEach((d, i) => tone("triangle", freq(79 + d), t + 0.07 * i, 0.12, 0.12, sfxBus)); },
     // ---- fiendernas slag: varje fiende låter på sitt eget sätt ----
